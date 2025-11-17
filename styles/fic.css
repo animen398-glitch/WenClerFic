@@ -1,0 +1,362 @@
+/* Fic Page Styles */
+
+.fic-header {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.fic-header-content {
+  max-width: 900px;
+}
+
+.fic-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.fic-meta-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.fic-author-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.fic-author-link:hover {
+  color: var(--primary-dark);
+}
+
+.fic-divider {
+  color: var(--text-muted);
+}
+
+.fic-rating-badge {
+  background: var(--warning);
+  color: var(--background);
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.fic-status {
+  text-transform: capitalize;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.fic-status.ongoing {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success);
+}
+
+.fic-status.completed {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--primary-color);
+}
+
+.fic-tags-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.fic-stats-header {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-icon {
+  font-size: 1.25rem;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.fic-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Description Section */
+.fic-description-section {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.fic-description-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.fic-description-section p {
+  color: var(--text-secondary);
+  line-height: 1.8;
+  font-size: 1rem;
+}
+
+/* Chapters Section */
+.chapters-section {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.chapters-list {
+  margin-top: 1.5rem;
+}
+
+.chapter-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.chapter-item:hover {
+  background: var(--surface-light);
+  border-color: var(--primary-color);
+}
+
+.chapter-info {
+  flex: 1;
+}
+
+.chapter-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.chapter-meta {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.chapter-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chapter-btn {
+  background: var(--surface-light);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+}
+
+.chapter-btn:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+/* Comments Section */
+.comments-section {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.comments-count {
+  background: var(--surface-light);
+  color: var(--text-secondary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.comment-form-container {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: var(--background);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.comment-form textarea {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  margin-bottom: 1rem;
+}
+
+.comment-form textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.comment-form textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.comment-form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.comments-list {
+  margin-top: 2rem;
+}
+
+.comment-item {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.comment-author {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.comment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.comment-author-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.comment-author-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.comment-author-name:hover {
+  color: var(--primary-color);
+}
+
+.comment-date {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.comment-text {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-left: 3.25rem;
+}
+
+.no-comments {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 3rem;
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .fic-title {
+    font-size: 1.75rem;
+  }
+
+  .fic-meta-header {
+    font-size: 0.85rem;
+  }
+
+  .fic-stats-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .fic-actions {
+    flex-direction: column;
+  }
+
+  .fic-actions .btn {
+    width: 100%;
+  }
+
+  .chapter-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .chapter-actions {
+    width: 100%;
+  }
+
+  .chapter-btn {
+    flex: 1;
+  }
+}
+

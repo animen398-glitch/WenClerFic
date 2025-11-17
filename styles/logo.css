@@ -1,0 +1,43 @@
+/* Logo Styles - Moon and Star */
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  display: inline-block;
+}
+
+.logo-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.logo-moon {
+  fill: none;
+  stroke: var(--text-primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.logo-star {
+  fill: var(--primary-color);
+  stroke: var(--text-primary);
+  stroke-width: 1.5;
+}
+
+/* Animated version */
+.logo-icon.animated .logo-star {
+  animation: twinkle 2s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}
+

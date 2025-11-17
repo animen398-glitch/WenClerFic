@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Просмотр фанфика - WenClerFic</title>
+  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="../styles/fic.css">
+  <link rel="stylesheet" href="../styles/logo.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header (same as index) -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <a href="/">
+            <span class="logo-icon animated">
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Moon -->
+                <path class="logo-moon" d="M 30 50 A 20 20 0 1 1 30 30" />
+                <!-- Star -->
+                <path class="logo-star" d="M 65 35 L 68 42 L 75 42 L 70 47 L 72 54 L 65 50 L 58 54 L 60 47 L 55 42 L 62 42 Z" />
+              </svg>
+            </span>
+            <span class="logo-text">WenClerFic</span>
+          </a>
+        </div>
+        
+        <nav class="main-nav">
+          <a href="/" class="nav-link">Главная</a>
+          <a href="/fics" class="nav-link">Каталог</a>
+          <a href="/authors" class="nav-link">Авторы</a>
+          <a href="/create" class="nav-link">Создать</a>
+        </nav>
+
+        <div class="header-actions">
+          <div class="search-box">
+            <input type="text" placeholder="Поиск фанфиков..." class="search-input">
+            <button class="search-btn">🔍</button>
+          </div>
+          
+          <div class="user-menu" id="user-menu">
+            <button class="user-btn" id="user-btn">
+              <span class="user-avatar">👤</span>
+              <span class="user-name" id="user-name">Войти</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Fic Header -->
+      <section class="fic-header" id="fic-header">
+        <div class="fic-header-content">
+          <h1 class="fic-title" id="fic-title">Загрузка...</h1>
+          <div class="fic-meta-header">
+            <a href="#" class="fic-author-link" id="fic-author-link">Автор</a>
+            <span class="fic-divider">•</span>
+            <span class="fic-rating-badge" id="fic-rating">—</span>
+            <span class="fic-divider">•</span>
+            <span class="fic-status" id="fic-status">—</span>
+            <span class="fic-divider">•</span>
+            <span class="fic-updated" id="fic-updated">—</span>
+          </div>
+          
+          <div class="fic-tags-header" id="fic-tags-header"></div>
+          
+          <div class="fic-stats-header">
+            <div class="stat-item">
+              <span class="stat-icon">👁</span>
+              <span class="stat-value" id="fic-views">0</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon">❤️</span>
+              <span class="stat-value" id="fic-likes">0</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon">📖</span>
+              <span class="stat-value" id="fic-chapters">0</span>
+            </div>
+          </div>
+
+          <div class="fic-actions">
+            <button class="btn btn-primary" id="like-btn">❤️ Нравится</button>
+            <button class="btn btn-outline" id="bookmark-btn">🔖 В закладки</button>
+            <button class="btn btn-outline" id="share-btn">📤 Поделиться</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Fic Description -->
+      <section class="fic-description-section">
+        <h2>Описание</h2>
+        <p id="fic-description">Загрузка...</p>
+      </section>
+
+      <!-- Chapters List -->
+      <section class="chapters-section">
+        <div class="section-header">
+          <h2>Главы</h2>
+          <button class="btn btn-outline" id="expand-chapters">Развернуть все</button>
+        </div>
+        <div class="chapters-list" id="chapters-list">
+          <div class="loading-spinner">Загрузка глав...</div>
+        </div>
+      </section>
+
+      <!-- Comments Section -->
+      <section class="comments-section">
+        <div class="section-header">
+          <h2>Комментарии</h2>
+          <span class="comments-count" id="comments-count">0</span>
+        </div>
+        
+        <div class="comment-form-container" id="comment-form-container" style="display: none;">
+          <form id="comment-form" class="comment-form">
+            <textarea 
+              id="comment-text" 
+              placeholder="Напишите комментарий..." 
+              rows="4"
+              required
+            ></textarea>
+            <div class="comment-form-actions">
+              <button type="submit" class="btn btn-primary">Отправить</button>
+              <button type="button" class="btn btn-outline" id="cancel-comment">Отмена</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="comments-list" id="comments-list">
+          <p class="no-comments">Пока нет комментариев. Будьте первым!</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>WenClerFic</h3>
+          <p>Платформа для создания и чтения фанфиков</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 WenClerFic. Все права защищены.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="../js/fic.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Создать фанфик - WenClerFic</title>
+  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="../styles/create.css">
+  <link rel="stylesheet" href="../styles/logo.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <a href="/">
+            <span class="logo-icon animated">
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Moon -->
+                <path class="logo-moon" d="M 30 50 A 20 20 0 1 1 30 30" />
+                <!-- Star -->
+                <path class="logo-star" d="M 65 35 L 68 42 L 75 42 L 70 47 L 72 54 L 65 50 L 58 54 L 60 47 L 55 42 L 62 42 Z" />
+              </svg>
+            </span>
+            <span class="logo-text">WenClerFic</span>
+          </a>
+        </div>
+        
+        <nav class="main-nav">
+          <a href="/" class="nav-link">Главная</a>
+          <a href="/fics" class="nav-link">Каталог</a>
+          <a href="/authors" class="nav-link">Авторы</a>
+          <a href="/create" class="nav-link active">Создать</a>
+        </nav>
+
+        <div class="header-actions">
+          <div class="user-menu" id="user-menu">
+            <button class="user-btn" id="user-btn">
+              <span class="user-avatar">👤</span>
+              <span class="user-name" id="user-name">Войти</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <div class="create-page">
+        <h1 class="page-title">Создать новый фанфик</h1>
+
+        <form id="create-fic-form" class="create-form">
+          <div class="form-section">
+            <h2 class="section-title">Основная информация</h2>
+            
+            <div class="form-group">
+              <label for="fic-title">Название фанфика *</label>
+              <input 
+                type="text" 
+                id="fic-title" 
+                name="title" 
+                placeholder="Введите название..."
+                required
+                maxlength="200"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="fic-description">Описание *</label>
+              <textarea 
+                id="fic-description" 
+                name="description" 
+                placeholder="Опишите ваш фанфик..."
+                rows="6"
+                required
+                maxlength="2000"
+              ></textarea>
+              <div class="char-count">
+                <span id="desc-char-count">0</span> / 2000 символов
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="fic-genre">Жанр *</label>
+                <select id="fic-genre" name="genre" required>
+                  <option value="">Выберите жанр</option>
+                  <option value="romance">Романтика</option>
+                  <option value="adventure">Приключения</option>
+                  <option value="fantasy">Фэнтези</option>
+                  <option value="drama">Драма</option>
+                  <option value="horror">Ужасы</option>
+                  <option value="comedy">Комедия</option>
+                  <option value="sci-fi">Научная фантастика</option>
+                  <option value="mystery">Детектив</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="fic-rating">Рейтинг *</label>
+                <select id="fic-rating" name="rating" required>
+                  <option value="">Выберите рейтинг</option>
+                  <option value="G">G - Для всех</option>
+                  <option value="PG">PG - Родительский контроль</option>
+                  <option value="PG-13">PG-13 - Детям до 13 лет</option>
+                  <option value="R">R - Ограниченный</option>
+                  <option value="NC-17">NC-17 - Только для взрослых</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="fic-tags">Теги</label>
+              <input 
+                type="text" 
+                id="fic-tags" 
+                name="tags" 
+                placeholder="Введите теги через запятую (например: магия, приключения, дружба)"
+              >
+              <small class="form-hint">Теги помогают читателям найти ваш фанфик</small>
+            </div>
+
+            <div class="form-group">
+              <label for="fic-status">Статус</label>
+              <select id="fic-status" name="status">
+                <option value="ongoing">В процессе</option>
+                <option value="completed">Завершен</option>
+                <option value="on-hold">Приостановлен</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline" id="cancel-btn">Отмена</button>
+            <button type="submit" class="btn btn-primary" id="submit-btn">Создать фанфик</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>WenClerFic</h3>
+          <p>Платформа для создания и чтения фанфиков</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 WenClerFic. Все права защищены.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="../js/create.js"></script>
+</body>
+</html>
+

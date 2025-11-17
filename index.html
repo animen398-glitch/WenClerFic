@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WenClerFic - Платформа для фанфиков</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/logo.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <a href="/">
+            <span class="logo-icon animated">
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Moon -->
+                <path class="logo-moon" d="M 30 50 A 20 20 0 1 1 30 30" />
+                <!-- Star -->
+                <path class="logo-star" d="M 65 35 L 68 42 L 75 42 L 70 47 L 72 54 L 65 50 L 58 54 L 60 47 L 55 42 L 62 42 Z" />
+              </svg>
+            </span>
+            <span class="logo-text">WenClerFic</span>
+          </a>
+        </div>
+        
+        <nav class="main-nav">
+          <a href="/" class="nav-link active">Главная</a>
+          <a href="/fics" class="nav-link">Каталог</a>
+          <a href="/authors" class="nav-link">Авторы</a>
+          <a href="/create" class="nav-link">Создать</a>
+        </nav>
+
+        <div class="header-actions">
+          <div class="search-box">
+            <input type="text" id="search-input" placeholder="Поиск фанфиков..." class="search-input">
+            <button class="search-btn">🔍</button>
+          </div>
+          
+          <div class="user-menu" id="user-menu">
+            <button class="user-btn" id="user-btn">
+              <span class="user-avatar">👤</span>
+              <span class="user-name" id="user-name">Войти</span>
+            </button>
+            <div class="user-dropdown" id="user-dropdown" style="display: none;">
+              <a href="/profile" class="dropdown-item">Мой профиль</a>
+              <a href="/my-fics" class="dropdown-item">Мои фанфики</a>
+              <a href="/bookmarks" class="dropdown-item">Закладки</a>
+              <a href="/settings" class="dropdown-item">Настройки</a>
+              <hr class="dropdown-divider">
+              <a href="#" class="dropdown-item" id="logout-btn">Выйти</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Hero Section -->
+      <section class="hero-section">
+        <h1 class="hero-title">Добро пожаловать в мир фанфиков</h1>
+        <p class="hero-subtitle">Читайте, создавайте и делитесь своими историями</p>
+        <div class="hero-actions">
+          <a href="/create" class="btn btn-primary">Создать фанфик</a>
+          <a href="/fics" class="btn btn-secondary">Найти истории</a>
+        </div>
+      </section>
+
+      <!-- Filters -->
+      <section class="filters-section">
+        <div class="filters">
+          <div class="filter-group">
+            <label>Жанр:</label>
+            <select id="genre-filter" class="filter-select">
+              <option value="">Все жанры</option>
+              <option value="romance">Романтика</option>
+              <option value="adventure">Приключения</option>
+              <option value="fantasy">Фэнтези</option>
+              <option value="drama">Драма</option>
+              <option value="horror">Ужасы</option>
+              <option value="comedy">Комедия</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Рейтинг:</label>
+            <select id="rating-filter" class="filter-select">
+              <option value="">Все рейтинги</option>
+              <option value="G">G</option>
+              <option value="PG">PG</option>
+              <option value="PG-13">PG-13</option>
+              <option value="R">R</option>
+              <option value="NC-17">NC-17</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Сортировка:</label>
+            <select id="sort-filter" class="filter-select">
+              <option value="newest">Новые</option>
+              <option value="popular">Популярные</option>
+              <option value="rating">По рейтингу</option>
+              <option value="views">По просмотрам</option>
+            </select>
+          </div>
+
+          <button class="btn btn-outline" id="apply-filters">Применить</button>
+        </div>
+      </section>
+
+      <!-- Fics Grid -->
+      <section class="fics-section">
+        <div class="section-header">
+          <h2 class="section-title">Популярные фанфики</h2>
+          <div class="view-toggle">
+            <button class="view-btn active" data-view="grid">⊞</button>
+            <button class="view-btn" data-view="list">☰</button>
+          </div>
+        </div>
+
+        <div class="fics-grid" id="fics-grid">
+          <!-- Fics will be loaded here -->
+          <div class="loading-spinner" id="loading-spinner">Загрузка...</div>
+        </div>
+
+        <div class="pagination" id="pagination">
+          <!-- Pagination will be generated here -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>WenClerFic</h3>
+          <p>Платформа для создания и чтения фанфиков</p>
+        </div>
+        <div class="footer-section">
+          <h4>Навигация</h4>
+          <a href="/about">О нас</a>
+          <a href="/rules">Правила</a>
+          <a href="/help">Помощь</a>
+        </div>
+        <div class="footer-section">
+          <h4>Сообщество</h4>
+          <a href="/forum">Форум</a>
+          <a href="/contests">Конкурсы</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 WenClerFic. Все права защищены.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Auth Modal -->
+  <div class="modal" id="auth-modal" style="display: none;">
+    <div class="modal-content">
+      <span class="modal-close" id="modal-close">&times;</span>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Вход</button>
+        <button class="auth-tab" data-tab="register">Регистрация</button>
+      </div>
+      
+      <form id="login-form" class="auth-form">
+        <input type="email" placeholder="Email" required>
+        <input type="password" placeholder="Пароль" required>
+        <button type="submit" class="btn btn-primary">Войти</button>
+        
+        <div class="auth-divider">
+          <span>или</span>
+        </div>
+        
+        <div class="oauth-buttons">
+          <button type="button" class="oauth-btn oauth-google" id="google-login">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+              <path d="M9 18c2.43 0 4.467-.806 5.96-2.184l-2.908-2.258c-.806.54-1.837.86-3.052.86-2.347 0-4.33-1.585-5.04-3.715H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+              <path d="M3.96 10.703c-.18-.54-.282-1.117-.282-1.703s.102-1.163.282-1.703V4.965H.957C.348 6.175 0 7.55 0 9s.348 2.825.957 4.035l3.003-2.332z" fill="#FBBC05"/>
+              <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.965L3.96 7.297C4.67 5.167 6.653 3.58 9 3.58z" fill="#EA4335"/>
+            </svg>
+            Войти через Google
+          </button>
+          <button type="button" class="oauth-btn oauth-facebook" id="facebook-login">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M18 9c0-4.97-4.03-9-9-9S0 4.03 0 9c0 4.42 3.21 8.08 7.41 8.84v-6.26H5.31V9h2.1V7.02c0-2.07 1.23-3.22 3.13-3.22.91 0 1.86.16 1.86.16v2.05h-1.05c-1.03 0-1.35.64-1.35 1.3V9h2.31l-.37 2.58h-1.94v6.26C14.79 17.08 18 13.42 18 9z" fill="#1877F2"/>
+            </svg>
+            Войти через Facebook
+          </button>
+        </div>
+      </form>
+
+      <form id="register-form" class="auth-form" style="display: none;">
+        <input type="text" placeholder="Имя пользователя" required>
+        <input type="email" placeholder="Email" required>
+        <input type="password" placeholder="Пароль" required>
+        <input type="password" placeholder="Подтвердите пароль" required>
+        <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+        
+        <div class="auth-divider">
+          <span>или</span>
+        </div>
+        
+        <div class="oauth-buttons">
+          <button type="button" class="oauth-btn oauth-google" id="google-register">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+              <path d="M9 18c2.43 0 4.467-.806 5.96-2.184l-2.908-2.258c-.806.54-1.837.86-3.052.86-2.347 0-4.33-1.585-5.04-3.715H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+              <path d="M3.96 10.703c-.18-.54-.282-1.117-.282-1.703s.102-1.163.282-1.703V4.965H.957C.348 6.175 0 7.55 0 9s.348 2.825.957 4.035l3.003-2.332z" fill="#FBBC05"/>
+              <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.965L3.96 7.297C4.67 5.167 6.653 3.58 9 3.58z" fill="#EA4335"/>
+            </svg>
+            Регистрация через Google
+          </button>
+          <button type="button" class="oauth-btn oauth-facebook" id="facebook-register">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M18 9c0-4.97-4.03-9-9-9S0 4.03 0 9c0 4.42 3.21 8.08 7.41 8.84v-6.26H5.31V9h2.1V7.02c0-2.07 1.23-3.22 3.13-3.22.91 0 1.86.16 1.86.16v2.05h-1.05c-1.03 0-1.35.64-1.35 1.3V9h2.31l-.37 2.58h-1.94v6.26C14.79 17.08 18 13.42 18 9z" fill="#1877F2"/>
+            </svg>
+            Регистрация через Facebook
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
+
