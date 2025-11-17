@@ -680,10 +680,26 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Initialize and start server
+// Initialize database
 initData().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  console.log('Database initialized');
+  
+  // Only start listening if not on Vercel (serverless)
+  if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
+}).catch(err => {
+  console.error('Database initialization error:', err);
+  // On Vercel, still export app even if DB init fails (it will retry on first request)
+  if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT} (DB init failed)`);
+    });
+  }
 });
+
+// Export app for Vercel serverless
+module.exports = app;
 
