@@ -36,91 +36,15 @@ let comments = [];
 
 // Initialize with sample data
 async function initData() {
-  // Sample users
+  // Sample users (для тестирования)
   users = [
     { id: 1, username: 'Author1', email: 'author1@test.com', password: 'password123', createdAt: new Date() },
     { id: 2, username: 'Author2', email: 'author2@test.com', password: 'password123', createdAt: new Date() },
     { id: 3, username: 'Author3', email: 'author3@test.com', password: 'password123', createdAt: new Date() }
   ];
 
-  // Sample fics
-  fics = [
-    {
-      id: 1,
-      title: 'Приключения в магическом мире',
-      authorId: 1,
-      description: 'История о молодом волшебнике, который открывает для себя новый мир магии и приключений. Вместе с друзьями он отправляется в опасное путешествие, чтобы спасти королевство от темных сил.',
-      genre: 'fantasy',
-      rating: 'PG-13',
-      tags: ['магия', 'приключения', 'фэнтези', 'дружба'],
-      views: 1250,
-      likes: 89,
-      chapters: 12,
-      status: 'ongoing',
-      createdAt: new Date('2024-12-01'),
-      updatedAt: new Date('2025-01-15')
-    },
-    {
-      id: 2,
-      title: 'Романтика в большом городе',
-      authorId: 2,
-      description: 'Современная история любви, разворачивающаяся на фоне городской суеты. Два незнакомца встречаются случайно и их жизни переплетаются самым неожиданным образом.',
-      genre: 'romance',
-      rating: 'PG',
-      tags: ['романтика', 'современность', 'любовь'],
-      views: 890,
-      likes: 67,
-      chapters: 8,
-      status: 'completed',
-      createdAt: new Date('2024-11-15'),
-      updatedAt: new Date('2025-01-14')
-    },
-    {
-      id: 3,
-      title: 'Тайны старого особняка',
-      authorId: 3,
-      description: 'Детективная история с элементами мистики, происходящая в заброшенном особняке. Группа друзей решает провести ночь в старом доме, но быстро понимает, что они не одни...',
-      genre: 'horror',
-      rating: 'R',
-      tags: ['ужасы', 'мистика', 'детектив', 'триллер'],
-      views: 2100,
-      likes: 145,
-      chapters: 15,
-      status: 'ongoing',
-      createdAt: new Date('2024-10-20'),
-      updatedAt: new Date('2025-01-16')
-    },
-    {
-      id: 4,
-      title: 'Космическая одиссея',
-      authorId: 1,
-      description: 'Эпическая сага о космических путешественниках, исследующих далекие галактики. Они сталкиваются с невероятными цивилизациями и опасностями космоса.',
-      genre: 'adventure',
-      rating: 'PG-13',
-      tags: ['космос', 'научная фантастика', 'приключения'],
-      views: 1567,
-      likes: 112,
-      chapters: 20,
-      status: 'ongoing',
-      createdAt: new Date('2024-09-10'),
-      updatedAt: new Date('2025-01-17')
-    },
-    {
-      id: 5,
-      title: 'Смех сквозь слезы',
-      authorId: 2,
-      description: 'Комедийная история о неудачливом актере, который пытается найти свое место в мире развлечений. Полна забавных ситуаций и неожиданных поворотов.',
-      genre: 'comedy',
-      rating: 'PG',
-      tags: ['комедия', 'юмор', 'современность'],
-      views: 743,
-      likes: 54,
-      chapters: 6,
-      status: 'completed',
-      createdAt: new Date('2024-12-20'),
-      updatedAt: new Date('2025-01-10')
-    }
-  ];
+  // Начинаем с пустого списка фанфиков - пользователи будут создавать свои
+  fics = [];
 }
 
 // Auth Routes
@@ -447,7 +371,10 @@ app.post('/api/fics', async (req, res) => {
       return res.status(401).json({ error: 'Не авторизован' });
     }
 
-    const { title, description, genre, rating, tags } = req.body;
+    const { title, description, genre, rating, tags, type, status, cover, fullHeader, contest } = req.body;
+
+    // Получаем автора из токена (упрощенная версия)
+    const userId = parseInt(token.split('_')[1]) || 1;
 
     const newFic = {
       id: fics.length + 1,
@@ -455,12 +382,16 @@ app.post('/api/fics', async (req, res) => {
       description,
       genre,
       rating,
+      type: type || 'original',
       tags: Array.isArray(tags) ? tags : [],
-      authorId: 1, // В реальном приложении извлекать из токена
+      authorId: userId,
+      cover: cover || null,
       views: 0,
       likes: 0,
       chapters: 0,
-      status: 'ongoing',
+      status: status || 'ongoing',
+      fullHeader: fullHeader || false,
+      contest: contest || false,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -472,6 +403,40 @@ app.post('/api/fics', async (req, res) => {
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
+
+// Upload cover
+const multer = require('multer');
+const upload = multer({ 
+  dest: 'uploads/covers/',
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Разрешены только файлы: .jpg, .png, .webp'));
+    }
+  }
+});
+
+app.post('/api/upload/cover', upload.single('cover'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Файл не загружен' });
+    }
+
+    // В продакшене сохранять файл в облачное хранилище
+    // Для демо возвращаем путь к файлу
+    const fileUrl = `/uploads/covers/${req.file.filename}`;
+    
+    res.json({ url: fileUrl });
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка загрузки файла' });
+  }
+});
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Chapters Routes
 app.get('/api/fics/:ficId/chapters', async (req, res) => {

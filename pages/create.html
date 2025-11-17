@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Создать фанфик - WenClerFic</title>
+  <title>Создать свою Историю - WenClerFic</title>
   <link rel="stylesheet" href="../styles/main.css">
   <link rel="stylesheet" href="../styles/create.css">
   <link rel="stylesheet" href="../styles/logo.css">
@@ -34,7 +34,7 @@
           <a href="/" class="nav-link">Главная</a>
           <a href="/fics" class="nav-link">Каталог</a>
           <a href="/authors" class="nav-link">Авторы</a>
-          <a href="/create" class="nav-link active">Создать</a>
+          <a href="/create" class="nav-link active">Создать свою Историю</a>
         </nav>
 
         <div class="header-actions">
@@ -52,32 +52,160 @@
   <!-- Main Content -->
   <main class="main-content">
     <div class="container">
-      <div class="create-page">
-        <h1 class="page-title">Создать новый фанфик</h1>
+      <div class="create-layout">
+        <!-- Sidebar -->
+        <aside class="create-sidebar">
+          <div class="sidebar-section">
+            <h3 class="sidebar-title">ИСТОРИЯ</h3>
+            <nav class="sidebar-nav">
+              <a href="#header" class="sidebar-link active">Шапка истории</a>
+              <a href="#content" class="sidebar-link">Содержание</a>
+              <a href="#reviews" class="sidebar-link">Отзывы к работе <span class="count">0</span></a>
+              <a href="#collections" class="sidebar-link">В сборниках <span class="count">0</span></a>
+              <a href="#stats" class="sidebar-link">Статистика</a>
+              <a href="#page" class="sidebar-link">Страница работы</a>
+            </nav>
+          </div>
+          <div class="sidebar-section">
+            <h3 class="sidebar-title">ПРОДВИЖЕНИЕ</h3>
+            <nav class="sidebar-nav">
+              <a href="#promo" class="sidebar-link">Добавить в «Промо»</a>
+              <a href="#hot" class="sidebar-link">Добавить в «Горячее»</a>
+            </nav>
+          </div>
+        </aside>
 
-        <form id="create-fic-form" class="create-form">
-          <div class="form-section">
-            <h2 class="section-title">Основная информация</h2>
-            
+        <!-- Main Form -->
+        <div class="create-main">
+          <div class="create-header">
+            <h1 class="page-title">Заполнить шапку работы</h1>
+            <button class="btn btn-primary" id="add-part-btn">+ Добавить часть</button>
+          </div>
+
+          <form id="create-fic-form" class="create-form">
+            <!-- Full Header Version -->
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="full-header" name="fullHeader">
+                <span>Полная версия шапки работы</span>
+              </label>
+            </div>
+
+            <!-- Title -->
             <div class="form-group">
-              <label for="fic-title">Название фанфика *</label>
+              <label for="fic-title">Название *</label>
               <input 
                 type="text" 
                 id="fic-title" 
                 name="title" 
-                placeholder="Введите название..."
+                placeholder="Без названия"
                 required
                 maxlength="200"
               >
             </div>
 
+            <!-- Cover -->
             <div class="form-group">
-              <label for="fic-description">Описание *</label>
+              <label for="fic-cover">Обложка</label>
+              <div class="cover-info">
+                <p class="info-text">
+                  Обложки проходят модерацию в соответствии с 
+                  <a href="#" class="info-link">Правилами ресурса</a>.
+                </p>
+                <p class="warning-text">
+                  <strong>Запрещено:</strong> нарушение авторских прав, изображения сексуального характера / шокирующие / провокационные, с алкоголем / табаком / наркотическими веществами.
+                </p>
+                <p class="info-text">
+                  <strong>Требования:</strong> Не более 5 мб, минимум 600x600 px, .jpg .png .webp
+                </p>
+                <p class="info-text">
+                  Загрузка обложки доступна для всех авторов. 
+                  <a href="#" class="info-link">Подробнее о Промо</a>
+                </p>
+              </div>
+              <div class="cover-upload">
+                <input 
+                  type="file" 
+                  id="fic-cover" 
+                  name="cover" 
+                  accept="image/jpeg,image/png,image/webp"
+                  style="display: none;"
+                >
+                <button type="button" class="btn btn-outline" id="cover-upload-btn">
+                  Загрузить обложку
+                </button>
+                <div class="cover-preview" id="cover-preview" style="display: none;">
+                  <img id="cover-image" src="" alt="Обложка">
+                  <button type="button" class="cover-remove" id="cover-remove">×</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contest -->
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="contest" name="contest">
+                <span>Участвовать в конкурсе</span>
+              </label>
+            </div>
+
+            <!-- Type -->
+            <div class="form-group">
+              <label>Тип *</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" name="type" value="original" checked>
+                  <div class="radio-content">
+                    <strong>Ориджинал</strong>
+                    <p>Работа оригинальная, персонажи и события выдуманы автором.</p>
+                  </div>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="type" value="fanfic">
+                  <div class="radio-content">
+                    <strong>Фанфик по фэндому</strong>
+                    <p>Работа написана по книге, фильму, игре или реальным людям.</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Rating -->
+            <div class="form-group">
+              <label for="fic-rating">Рейтинг *</label>
+              <select id="fic-rating" name="rating" required>
+                <option value="G">G (для любой аудитории)</option>
+                <option value="PG">PG (родительский контроль)</option>
+                <option value="PG-13">PG-13 (детям до 13 лет)</option>
+                <option value="R">R (ограниченный)</option>
+                <option value="NC-17">NC-17 (только для взрослых)</option>
+              </select>
+            </div>
+
+            <!-- Genre -->
+            <div class="form-group">
+              <label for="fic-genre">Жанр *</label>
+              <select id="fic-genre" name="genre" required>
+                <option value="">Выберите жанр</option>
+                <option value="romance">Романтика</option>
+                <option value="adventure">Приключения</option>
+                <option value="fantasy">Фэнтези</option>
+                <option value="drama">Драма</option>
+                <option value="horror">Ужасы</option>
+                <option value="comedy">Комедия</option>
+                <option value="sci-fi">Научная фантастика</option>
+                <option value="mystery">Детектив</option>
+              </select>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+              <label for="fic-description">Краткое описание *</label>
               <textarea 
                 id="fic-description" 
                 name="description" 
-                placeholder="Опишите ваш фанфик..."
-                rows="6"
+                placeholder="Опишите вашу историю..."
+                rows="8"
                 required
                 maxlength="2000"
               ></textarea>
@@ -86,35 +214,7 @@
               </div>
             </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label for="fic-genre">Жанр *</label>
-                <select id="fic-genre" name="genre" required>
-                  <option value="">Выберите жанр</option>
-                  <option value="romance">Романтика</option>
-                  <option value="adventure">Приключения</option>
-                  <option value="fantasy">Фэнтези</option>
-                  <option value="drama">Драма</option>
-                  <option value="horror">Ужасы</option>
-                  <option value="comedy">Комедия</option>
-                  <option value="sci-fi">Научная фантастика</option>
-                  <option value="mystery">Детектив</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="fic-rating">Рейтинг *</label>
-                <select id="fic-rating" name="rating" required>
-                  <option value="">Выберите рейтинг</option>
-                  <option value="G">G - Для всех</option>
-                  <option value="PG">PG - Родительский контроль</option>
-                  <option value="PG-13">PG-13 - Детям до 13 лет</option>
-                  <option value="R">R - Ограниченный</option>
-                  <option value="NC-17">NC-17 - Только для взрослых</option>
-                </select>
-              </div>
-            </div>
-
+            <!-- Tags -->
             <div class="form-group">
               <label for="fic-tags">Теги</label>
               <input 
@@ -123,9 +223,10 @@
                 name="tags" 
                 placeholder="Введите теги через запятую (например: магия, приключения, дружба)"
               >
-              <small class="form-hint">Теги помогают читателям найти ваш фанфик</small>
+              <small class="form-hint">Теги помогают читателям найти вашу историю</small>
             </div>
 
+            <!-- Status -->
             <div class="form-group">
               <label for="fic-status">Статус</label>
               <select id="fic-status" name="status">
@@ -134,13 +235,14 @@
                 <option value="on-hold">Приостановлен</option>
               </select>
             </div>
-          </div>
 
-          <div class="form-actions">
-            <button type="button" class="btn btn-outline" id="cancel-btn">Отмена</button>
-            <button type="submit" class="btn btn-primary" id="submit-btn">Создать фанфик</button>
-          </div>
-        </form>
+            <!-- Actions -->
+            <div class="form-actions">
+              <button type="button" class="btn btn-outline" id="cancel-btn">Отмена</button>
+              <button type="submit" class="btn btn-primary" id="submit-btn">Создать историю</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </main>
@@ -163,4 +265,3 @@
   <script type="module" src="../js/create.js"></script>
 </body>
 </html>
-
