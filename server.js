@@ -227,20 +227,56 @@ app.get('/api/auth/google/callback', async (req, res) => {
       return res.send('<script>window.opener.postMessage({type: "oauth-error", error: "Ошибка авторизации"}, "*"); window.close();</script>');
     }
 
-    // В продакшене обменять code на токен через Google API
-    // Для демо создаем пользователя напрямую
-    const email = `google_${Date.now()}@example.com`;
-    const username = `GoogleUser_${Date.now()}`;
-    
-    let user = users.find(u => u.email === email);
+    // Обменять code на токен через Google API
+    if (!OAUTH_CONFIG.google.clientId || !OAUTH_CONFIG.google.clientSecret) {
+      return res.send('<script>window.opener.postMessage({type: "oauth-error", error: "OAuth не настроен. Добавьте ключи в .env"}, "*"); window.close();</script>');
+    }
+
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        code: code,
+        client_id: OAUTH_CONFIG.google.clientId,
+        client_secret: OAUTH_CONFIG.google.clientSecret,
+        redirect_uri: OAUTH_CONFIG.google.redirectUri,
+        grant_type: 'authorization_code'
+      })
+    });
+
+    const tokenData = await tokenResponse.json();
+
+    if (!tokenData.access_token) {
+      console.error('Token error:', tokenData);
+      return res.send(`<script>window.opener.postMessage({type: "oauth-error", error: "${tokenData.error || 'Ошибка получения токена'}"}, "*"); window.close();</script>`);
+    }
+
+    // Получить информацию о пользователе
+    const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: {
+        'Authorization': `Bearer ${tokenData.access_token}`
+      }
+    });
+
+    const googleUser = await userResponse.json();
+
+    if (!googleUser.email) {
+      return res.send('<script>window.opener.postMessage({type: "oauth-error", error: "Не удалось получить email пользователя"}, "*"); window.close();</script>');
+    }
+
+    // Найти или создать пользователя
+    let user = users.find(u => u.email === googleUser.email);
     
     if (!user) {
       user = {
         id: users.length + 1,
-        username,
-        email,
+        username: googleUser.name || `GoogleUser_${Date.now()}`,
+        email: googleUser.email,
         password: null,
         provider: 'google',
+        avatar: googleUser.picture || null,
         createdAt: new Date()
       };
       users.push(user);
@@ -260,7 +296,8 @@ app.get('/api/auth/google/callback', async (req, res) => {
       </script>
     `);
   } catch (error) {
-    res.send('<script>window.opener.postMessage({type: "oauth-error", error: "Ошибка сервера"}, "*"); window.close();</script>');
+    console.error('Google OAuth error:', error);
+    res.send(`<script>window.opener.postMessage({type: "oauth-error", error: "Ошибка сервера: ${error.message}"}, "*"); window.close();</script>`);
   }
 });
 
