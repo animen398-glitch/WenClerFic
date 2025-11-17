@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Добавить главу - WenClerFic</title>
+  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="../styles/create.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <a href="/">
+            <span class="logo-icon">📚</span>
+            <span class="logo-text">WenClerFic</span>
+          </a>
+        </div>
+        
+        <nav class="main-nav">
+          <a href="/" class="nav-link">Главная</a>
+          <a href="/fics" class="nav-link">Каталог</a>
+          <a href="/authors" class="nav-link">Авторы</a>
+          <a href="/create" class="nav-link">Создать</a>
+        </nav>
+
+        <div class="header-actions">
+          <div class="user-menu" id="user-menu">
+            <button class="user-btn" id="user-btn">
+              <span class="user-avatar">👤</span>
+              <span class="user-name" id="user-name">Войти</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="create-page">
+        <h1 class="page-title">Добавить главу</h1>
+        <p id="fic-info" style="color: var(--text-secondary); margin-bottom: 2rem;">Загрузка...</p>
+
+        <form id="add-chapter-form" class="create-form">
+          <div class="form-section">
+            <div class="form-group">
+              <label for="chapter-title">Название главы *</label>
+              <input 
+                type="text" 
+                id="chapter-title" 
+                name="title" 
+                placeholder="Введите название главы..."
+                required
+                maxlength="200"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="chapter-content">Содержание главы *</label>
+              <textarea 
+                id="chapter-content" 
+                name="content" 
+                placeholder="Напишите содержание главы..."
+                rows="20"
+                required
+              ></textarea>
+              <div class="char-count">
+                <span id="content-word-count">0</span> слов
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline" id="cancel-btn">Отмена</button>
+            <button type="submit" class="btn btn-primary" id="submit-btn">Добавить главу</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>WenClerFic</h3>
+          <p>Платформа для создания и чтения фанфиков</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 WenClerFic. Все права защищены.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="../js/add-chapter.js"></script>
+</body>
+</html>
+

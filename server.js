@@ -34,93 +34,13 @@ let fics = [];
 let chapters = [];
 let comments = [];
 
-// Initialize with sample data
+// Initialize with empty data (only real user-uploaded fics will be shown)
 async function initData() {
-  // Sample users
-  users = [
-    { id: 1, username: 'Author1', email: 'author1@test.com', password: 'password123', createdAt: new Date() },
-    { id: 2, username: 'Author2', email: 'author2@test.com', password: 'password123', createdAt: new Date() },
-    { id: 3, username: 'Author3', email: 'author3@test.com', password: 'password123', createdAt: new Date() }
-  ];
-
-  // Sample fics
-  fics = [
-    {
-      id: 1,
-      title: 'Приключения в магическом мире',
-      authorId: 1,
-      description: 'История о молодом волшебнике, который открывает для себя новый мир магии и приключений. Вместе с друзьями он отправляется в опасное путешествие, чтобы спасти королевство от темных сил.',
-      genre: 'fantasy',
-      rating: 'PG-13',
-      tags: ['магия', 'приключения', 'фэнтези', 'дружба'],
-      views: 1250,
-      likes: 89,
-      chapters: 12,
-      status: 'ongoing',
-      createdAt: new Date('2024-12-01'),
-      updatedAt: new Date('2025-01-15')
-    },
-    {
-      id: 2,
-      title: 'Романтика в большом городе',
-      authorId: 2,
-      description: 'Современная история любви, разворачивающаяся на фоне городской суеты. Два незнакомца встречаются случайно и их жизни переплетаются самым неожиданным образом.',
-      genre: 'romance',
-      rating: 'PG',
-      tags: ['романтика', 'современность', 'любовь'],
-      views: 890,
-      likes: 67,
-      chapters: 8,
-      status: 'completed',
-      createdAt: new Date('2024-11-15'),
-      updatedAt: new Date('2025-01-14')
-    },
-    {
-      id: 3,
-      title: 'Тайны старого особняка',
-      authorId: 3,
-      description: 'Детективная история с элементами мистики, происходящая в заброшенном особняке. Группа друзей решает провести ночь в старом доме, но быстро понимает, что они не одни...',
-      genre: 'horror',
-      rating: 'R',
-      tags: ['ужасы', 'мистика', 'детектив', 'триллер'],
-      views: 2100,
-      likes: 145,
-      chapters: 15,
-      status: 'ongoing',
-      createdAt: new Date('2024-10-20'),
-      updatedAt: new Date('2025-01-16')
-    },
-    {
-      id: 4,
-      title: 'Космическая одиссея',
-      authorId: 1,
-      description: 'Эпическая сага о космических путешественниках, исследующих далекие галактики. Они сталкиваются с невероятными цивилизациями и опасностями космоса.',
-      genre: 'adventure',
-      rating: 'PG-13',
-      tags: ['космос', 'научная фантастика', 'приключения'],
-      views: 1567,
-      likes: 112,
-      chapters: 20,
-      status: 'ongoing',
-      createdAt: new Date('2024-09-10'),
-      updatedAt: new Date('2025-01-17')
-    },
-    {
-      id: 5,
-      title: 'Смех сквозь слезы',
-      authorId: 2,
-      description: 'Комедийная история о неудачливом актере, который пытается найти свое место в мире развлечений. Полна забавных ситуаций и неожиданных поворотов.',
-      genre: 'comedy',
-      rating: 'PG',
-      tags: ['комедия', 'юмор', 'современность'],
-      views: 743,
-      likes: 54,
-      chapters: 6,
-      status: 'completed',
-      createdAt: new Date('2024-12-20'),
-      updatedAt: new Date('2025-01-10')
-    }
-  ];
+  // Start with empty arrays - only real users and fics will be stored
+  users = [];
+  fics = [];
+  chapters = [];
+  comments = [];
 }
 
 // Auth Routes
@@ -422,6 +342,18 @@ app.get('/api/fics/:id', async (req, res) => {
   }
 });
 
+// Helper function to get user from token
+function getUserFromToken(token) {
+  if (!token) return null;
+  // Simple token parsing - in production use JWT
+  const match = token.match(/token_(\d+)_/);
+  if (match) {
+    const userId = parseInt(match[1]);
+    return users.find(u => u.id === userId);
+  }
+  return null;
+}
+
 app.post('/api/fics', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
@@ -429,20 +361,29 @@ app.post('/api/fics', async (req, res) => {
       return res.status(401).json({ error: 'Не авторизован' });
     }
 
-    const { title, description, genre, rating, tags } = req.body;
+    const user = getUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+
+    const { title, description, genre, rating, tags, status } = req.body;
+
+    if (!title || !description || !genre || !rating) {
+      return res.status(400).json({ error: 'Все обязательные поля должны быть заполнены' });
+    }
 
     const newFic = {
-      id: fics.length + 1,
+      id: fics.length > 0 ? Math.max(...fics.map(f => f.id)) + 1 : 1,
       title,
       description,
       genre,
       rating,
-      tags: Array.isArray(tags) ? tags : [],
-      authorId: 1, // В реальном приложении извлекать из токена
+      tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()).filter(t => t) : []),
+      authorId: user.id,
       views: 0,
       likes: 0,
       chapters: 0,
-      status: 'ongoing',
+      status: status || 'ongoing',
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -455,10 +396,46 @@ app.post('/api/fics', async (req, res) => {
   }
 });
 
+app.delete('/api/fics/:id', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Не авторизован' });
+    }
+
+    const user = getUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+
+    const ficId = parseInt(req.params.id);
+    const fic = fics.find(f => f.id === ficId);
+
+    if (!fic) {
+      return res.status(404).json({ error: 'Фанфик не найден' });
+    }
+
+    if (fic.authorId !== user.id) {
+      return res.status(403).json({ error: 'Вы можете удалять только свои фанфики' });
+    }
+
+    // Remove fic and related chapters/comments
+    fics = fics.filter(f => f.id !== ficId);
+    chapters = chapters.filter(c => c.ficId !== ficId);
+    comments = comments.filter(c => c.ficId !== ficId);
+
+    res.json({ message: 'Фанфик успешно удален' });
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
 // Chapters Routes
 app.get('/api/fics/:ficId/chapters', async (req, res) => {
   try {
-    const ficChapters = chapters.filter(c => c.ficId === parseInt(req.params.ficId));
+    const ficChapters = chapters
+      .filter(c => c.ficId === parseInt(req.params.ficId))
+      .sort((a, b) => a.order - b.order);
     res.json(ficChapters);
   } catch (error) {
     res.status(500).json({ error: 'Ошибка сервера' });
@@ -481,6 +458,135 @@ app.get('/api/fics/:ficId/chapters/:chapterId', async (req, res) => {
   }
 });
 
+app.post('/api/fics/:ficId/chapters', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Не авторизован' });
+    }
+
+    const user = getUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+
+    const ficId = parseInt(req.params.ficId);
+    const fic = fics.find(f => f.id === ficId);
+
+    if (!fic) {
+      return res.status(404).json({ error: 'Фанфик не найден' });
+    }
+
+    if (fic.authorId !== user.id) {
+      return res.status(403).json({ error: 'Вы можете добавлять главы только к своим фанфикам' });
+    }
+
+    const { title, content } = req.body;
+
+    if (!title || !content) {
+      return res.status(400).json({ error: 'Название и содержание главы обязательны' });
+    }
+
+    const ficChapters = chapters.filter(c => c.ficId === ficId);
+    const maxOrder = ficChapters.length > 0 ? Math.max(...ficChapters.map(c => c.order)) : 0;
+
+    const newChapter = {
+      id: chapters.length > 0 ? Math.max(...chapters.map(c => c.id)) + 1 : 1,
+      ficId,
+      title: title.trim(),
+      content: content.trim(),
+      order: maxOrder + 1,
+      words: content.trim().split(/\s+/).filter(w => w).length,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    chapters.push(newChapter);
+    fic.chapters = chapters.filter(c => c.ficId === ficId).length;
+    fic.updatedAt = new Date();
+
+    res.status(201).json(newChapter);
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+app.put('/api/fics/:ficId/chapters/:chapterId', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Не авторизован' });
+    }
+
+    const user = getUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+
+    const ficId = parseInt(req.params.ficId);
+    const chapterId = parseInt(req.params.chapterId);
+    const fic = fics.find(f => f.id === ficId);
+    const chapter = chapters.find(c => c.id === chapterId && c.ficId === ficId);
+
+    if (!fic || !chapter) {
+      return res.status(404).json({ error: 'Фанфик или глава не найдены' });
+    }
+
+    if (fic.authorId !== user.id) {
+      return res.status(403).json({ error: 'Вы можете редактировать только свои главы' });
+    }
+
+    const { title, content } = req.body;
+
+    if (title) chapter.title = title.trim();
+    if (content) {
+      chapter.content = content.trim();
+      chapter.words = content.trim().split(/\s+/).filter(w => w).length;
+    }
+    chapter.updatedAt = new Date();
+    fic.updatedAt = new Date();
+
+    res.json(chapter);
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+app.delete('/api/fics/:ficId/chapters/:chapterId', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Не авторизован' });
+    }
+
+    const user = getUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+
+    const ficId = parseInt(req.params.ficId);
+    const chapterId = parseInt(req.params.chapterId);
+    const fic = fics.find(f => f.id === ficId);
+    const chapter = chapters.find(c => c.id === chapterId && c.ficId === ficId);
+
+    if (!fic || !chapter) {
+      return res.status(404).json({ error: 'Фанфик или глава не найдены' });
+    }
+
+    if (fic.authorId !== user.id) {
+      return res.status(403).json({ error: 'Вы можете удалять только свои главы' });
+    }
+
+    chapters = chapters.filter(c => c.id !== chapterId);
+    fic.chapters = Math.max(0, fic.chapters - 1);
+    fic.updatedAt = new Date();
+
+    res.json({ message: 'Глава успешно удалена' });
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
 // Comments Routes
 app.get('/api/fics/:ficId/comments', async (req, res) => {
   try {
@@ -498,13 +604,22 @@ app.post('/api/fics/:ficId/comments', async (req, res) => {
       return res.status(401).json({ error: 'Не авторизован' });
     }
 
+    const user = getUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+
     const { text } = req.body;
 
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'Комментарий не может быть пустым' });
+    }
+
     const newComment = {
-      id: comments.length + 1,
+      id: comments.length > 0 ? Math.max(...comments.map(c => c.id)) + 1 : 1,
       ficId: parseInt(req.params.ficId),
-      authorId: 1, // Из токена
-      text,
+      authorId: user.id,
+      text: text.trim(),
       createdAt: new Date()
     };
 
@@ -534,8 +649,71 @@ app.get('/create', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'create.html'));
 });
 
+// User Routes
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const user = users.find(u => u.id === userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+
+    const userFics = fics.filter(f => f.authorId === userId);
+    const { password: _, ...userWithoutPassword } = user;
+
+    res.json({
+      ...userWithoutPassword,
+      stats: {
+        ficsCount: userFics.length,
+        totalViews: userFics.reduce((sum, f) => sum + (f.views || 0), 0),
+        totalLikes: userFics.reduce((sum, f) => sum + (f.likes || 0), 0),
+        totalChapters: userFics.reduce((sum, f) => sum + (f.chapters || 0), 0)
+      },
+      fics: userFics.map(fic => ({
+        ...fic,
+        author: userWithoutPassword
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+app.get('/api/users/:id/fics', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const userFics = fics.filter(f => f.authorId === userId);
+    
+    const ficsWithAuthors = userFics.map(fic => ({
+      ...fic,
+      author: users.find(u => u.id === fic.authorId) || { username: 'Unknown', id: fic.authorId }
+    }));
+
+    res.json(ficsWithAuthors);
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
 app.get('/profile', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'profile.html'));
+});
+
+app.get('/author/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'profile.html'));
+});
+
+app.get('/my-fics', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'my-fics.html'));
+});
+
+app.get('/fic/:id/addpart', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'add-chapter.html'));
+});
+
+app.get('/fic/:id/chapter/:chapterId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'chapter.html'));
 });
 
 // Fallback for other routes

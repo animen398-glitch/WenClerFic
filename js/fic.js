@@ -83,6 +83,7 @@ async function loadFic(id) {
 }
 
 function renderFic(fic) {
+  currentFic = fic;
   document.getElementById('fic-title').textContent = fic.title;
   document.getElementById('fic-description').textContent = fic.description;
   document.getElementById('fic-author-link').textContent = fic.author?.username || 'Unknown';
@@ -105,9 +106,51 @@ function renderFic(fic) {
     ).join('');
   }
 
+  // Add delete button if user is author
+  const ficActions = document.querySelector('.fic-actions');
+  const isAuthor = currentUser && fic.authorId === currentUser.id;
+  if (isAuthor && !document.getElementById('delete-fic-btn')) {
+    const deleteBtn = document.createElement('button');
+    deleteBtn.id = 'delete-fic-btn';
+    deleteBtn.className = 'btn btn-outline';
+    deleteBtn.style.color = 'var(--error)';
+    deleteBtn.textContent = '🗑️ Удалить фанфик';
+    deleteBtn.onclick = () => deleteFic(fic.id);
+    ficActions.appendChild(deleteBtn);
+  }
+
   // Update page title
   document.title = `${fic.title} - WenClerFic`;
 }
+
+async function deleteFic(id) {
+  if (!confirm('Вы уверены, что хотите удалить этот фанфик? Это действие нельзя отменить.')) {
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE}/fics/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.ok) {
+      alert('Фанфик успешно удален');
+      window.location.href = '/';
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Ошибка при удалении фанфика');
+    }
+  } catch (error) {
+    console.error('Error deleting fic:', error);
+    alert('Ошибка подключения к серверу');
+  }
+}
+
+window.deleteFic = deleteFic;
 
 async function loadChapters(ficId) {
   try {
@@ -115,6 +158,21 @@ async function loadChapters(ficId) {
     const chapters = await response.json();
 
     renderChapters(chapters);
+    
+    // Add "Add Chapter" button if user is author
+    const isAuthor = currentUser && currentFic && currentFic.authorId === currentUser.id;
+    const addChapterContainer = document.getElementById('add-chapter-container');
+    if (isAuthor && addChapterContainer) {
+      if (!addChapterContainer.querySelector('a')) {
+        const addBtn = document.createElement('a');
+        addBtn.href = `/fic/${ficId}/addpart`;
+        addBtn.className = 'btn btn-primary';
+        addBtn.textContent = '+ Добавить главу';
+        addChapterContainer.appendChild(addBtn);
+      }
+    } else if (addChapterContainer) {
+      addChapterContainer.innerHTML = '';
+    }
   } catch (error) {
     console.error('Error loading chapters:', error);
     // Show empty state or mock data
@@ -124,6 +182,7 @@ async function loadChapters(ficId) {
 
 function renderChapters(chapters) {
   const container = document.getElementById('chapters-list');
+  const isAuthor = currentUser && currentFic && currentFic.authorId === currentUser.id;
   
   if (chapters.length === 0) {
     container.innerHTML = '<p class="no-comments">Глав пока нет</p>';
@@ -133,7 +192,7 @@ function renderChapters(chapters) {
   container.innerHTML = chapters.map((chapter, index) => `
     <div class="chapter-item" onclick="window.location.href='/fic/${ficId}/chapter/${chapter.id}'">
       <div class="chapter-info">
-        <div class="chapter-title">Глава ${index + 1}: ${chapter.title || 'Без названия'}</div>
+        <div class="chapter-title">Глава ${chapter.order || index + 1}: ${chapter.title || 'Без названия'}</div>
         <div class="chapter-meta">
           ${chapter.createdAt ? new Date(chapter.createdAt).toLocaleDateString('ru-RU') : 'Дата не указана'} • 
           ${chapter.words || 0} слов
@@ -143,10 +202,41 @@ function renderChapters(chapters) {
         <button class="chapter-btn" onclick="event.stopPropagation(); window.location.href='/fic/${ficId}/chapter/${chapter.id}'">
           Читать
         </button>
+        ${isAuthor ? `<button class="chapter-btn btn-danger" onclick="event.stopPropagation(); deleteChapter(${chapter.id})" title="Удалить главу">🗑️</button>` : ''}
       </div>
     </div>
   `).join('');
 }
+
+async function deleteChapter(chapterId) {
+  if (!confirm('Вы уверены, что хотите удалить эту главу? Это действие нельзя отменить.')) {
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE}/fics/${ficId}/chapters/${chapterId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.ok) {
+      alert('Глава успешно удалена');
+      loadChapters(ficId);
+      loadFic(ficId);
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Ошибка при удалении главы');
+    }
+  } catch (error) {
+    console.error('Error deleting chapter:', error);
+    alert('Ошибка подключения к серверу');
+  }
+}
+
+window.deleteChapter = deleteChapter;
 
 async function loadComments(ficId) {
   try {

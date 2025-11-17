@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Глава - WenClerFic</title>
+  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="../styles/fic.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .chapter-content {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+      line-height: 1.8;
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+    }
+    .chapter-navigation {
+      display: flex;
+      justify-content: space-between;
+      margin: 2rem 0;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <a href="/">
+            <span class="logo-icon">📚</span>
+            <span class="logo-text">WenClerFic</span>
+          </a>
+        </div>
+        
+        <nav class="main-nav">
+          <a href="/" class="nav-link">Главная</a>
+          <a href="/fics" class="nav-link">Каталог</a>
+          <a href="/authors" class="nav-link">Авторы</a>
+          <a href="/create" class="nav-link">Создать</a>
+        </nav>
+
+        <div class="header-actions">
+          <div class="user-menu" id="user-menu">
+            <button class="user-btn" id="user-btn">
+              <span class="user-avatar">👤</span>
+              <span class="user-name" id="user-name">Войти</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <div style="margin: 2rem 0;">
+        <a href="#" id="back-to-fic" style="color: var(--primary-color); text-decoration: none;">← Вернуться к фанфику</a>
+      </div>
+
+      <div class="fic-header">
+        <h1 id="chapter-title" class="fic-title">Загрузка...</h1>
+        <div class="fic-meta-header">
+          <span id="chapter-info">—</span>
+        </div>
+      </div>
+
+      <div class="chapter-content" id="chapter-content">
+        Загрузка...
+      </div>
+
+      <div class="chapter-navigation">
+        <button class="btn btn-outline" id="prev-chapter" style="display: none;">← Предыдущая глава</button>
+        <a href="#" id="back-to-fic-btn" class="btn btn-primary">К фанфику</a>
+        <button class="btn btn-outline" id="next-chapter" style="display: none;">Следующая глава →</button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>WenClerFic</h3>
+          <p>Платформа для создания и чтения фанфиков</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 WenClerFic. Все права защищены.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="../js/chapter.js"></script>
+</body>
+</html>
+

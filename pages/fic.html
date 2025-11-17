@@ -96,9 +96,12 @@
 
       <!-- Chapters List -->
       <section class="chapters-section">
-        <div class="section-header">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
           <h2>Главы</h2>
-          <button class="btn btn-outline" id="expand-chapters">Развернуть все</button>
+          <div style="display: flex; gap: 1rem;">
+            <div id="add-chapter-container"></div>
+            <button class="btn btn-outline" id="expand-chapters">Развернуть все</button>
+          </div>
         </div>
         <div class="chapters-list" id="chapters-list">
           <div class="loading-spinner">Загрузка глав...</div>

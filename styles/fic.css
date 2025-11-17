@@ -198,6 +198,17 @@
   color: white;
 }
 
+.chapter-btn.btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.chapter-btn.btn-danger:hover {
+  background: var(--error);
+  color: white;
+}
+
 /* Comments Section */
 .comments-section {
   background: var(--surface);

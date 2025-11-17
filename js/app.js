@@ -70,7 +70,9 @@ function setupEventListeners() {
   // Auth modal
   const authModal = document.getElementById('auth-modal');
   const modalClose = document.getElementById('modal-close');
-  const authTabs = document.querySelectorAll('.auth-tab');
+  const authNavLinks = document.querySelectorAll('.auth-nav-link');
+  const loginPane = document.getElementById('login-section');
+  const registerPane = document.getElementById('register-section');
   const loginForm = document.getElementById('login-form');
   const registerForm = document.getElementById('register-form');
 
@@ -84,18 +86,24 @@ function setupEventListeners() {
     }
   });
 
-  authTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const tabName = tab.dataset.tab;
-      authTabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-
+  authNavLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tabName = link.dataset.tab;
+      
+      // Update nav tabs
+      document.querySelectorAll('.auth-nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      link.closest('.auth-nav-tab').classList.add('active');
+      
+      // Update panes
       if (tabName === 'login') {
-        loginForm.style.display = 'flex';
-        registerForm.style.display = 'none';
+        loginPane.classList.add('active');
+        registerPane.classList.remove('active');
       } else {
-        loginForm.style.display = 'none';
-        registerForm.style.display = 'flex';
+        loginPane.classList.remove('active');
+        registerPane.classList.add('active');
       }
     });
   });
@@ -160,9 +168,9 @@ function showAuthModal() {
 
 async function handleLogin(e) {
   e.preventDefault();
-  const formData = new FormData(e.target);
-  const email = e.target.querySelector('input[type="email"]').value;
-  const password = e.target.querySelector('input[type="password"]').value;
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  const rememberMe = document.getElementById('remember-me').checked;
 
   try {
     const response = await fetch(`${API_BASE}/auth/login`, {
@@ -177,9 +185,12 @@ async function handleLogin(e) {
       state.currentUser = data.user;
       localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('token', data.token);
+      if (rememberMe) {
+        localStorage.setItem('rememberMe', 'true');
+      }
       updateUserUI();
       document.getElementById('auth-modal').style.display = 'none';
-      e.target.reset();
+      loginForm.reset();
     } else {
       alert(data.error || 'Ошибка входа');
     }
@@ -191,14 +202,18 @@ async function handleLogin(e) {
 
 async function handleRegister(e) {
   e.preventDefault();
-  const inputs = e.target.querySelectorAll('input');
-  const username = inputs[0].value;
-  const email = inputs[1].value;
-  const password = inputs[2].value;
-  const confirmPassword = inputs[3].value;
+  const username = document.getElementById('register-username').value;
+  const email = document.getElementById('register-email').value;
+  const password = document.getElementById('register-password').value;
+  const confirmPassword = document.getElementById('register-password-confirm').value;
 
   if (password !== confirmPassword) {
     alert('Пароли не совпадают');
+    return;
+  }
+
+  if (password.length < 6) {
+    alert('Пароль должен содержать минимум 6 символов');
     return;
   }
 
@@ -217,7 +232,8 @@ async function handleRegister(e) {
       localStorage.setItem('token', data.token);
       updateUserUI();
       document.getElementById('auth-modal').style.display = 'none';
-      e.target.reset();
+      registerForm.reset();
+      alert('Регистрация успешна! Добро пожаловать!');
     } else {
       alert(data.error || 'Ошибка регистрации');
     }
@@ -257,56 +273,11 @@ async function loadFics() {
     }
   } catch (error) {
     console.error('Error loading fics:', error);
-    // Use mock data for development
-    loadMockFics();
+    state.fics = [];
+    renderFics();
   } finally {
     spinner.style.display = 'none';
   }
-}
-
-function loadMockFics() {
-  state.fics = [
-    {
-      id: 1,
-      title: 'Приключения в магическом мире',
-      author: { username: 'Author1', id: 1 },
-      description: 'История о молодом волшебнике, который открывает для себя новый мир магии и приключений...',
-      genre: 'fantasy',
-      rating: 'PG-13',
-      tags: ['магия', 'приключения', 'фэнтези'],
-      views: 1250,
-      likes: 89,
-      chapters: 12,
-      updatedAt: '2025-01-15'
-    },
-    {
-      id: 2,
-      title: 'Романтика в большом городе',
-      author: { username: 'Author2', id: 2 },
-      description: 'Современная история любви, разворачивающаяся на фоне городской суеты...',
-      genre: 'romance',
-      rating: 'PG',
-      tags: ['романтика', 'современность'],
-      views: 890,
-      likes: 67,
-      chapters: 8,
-      updatedAt: '2025-01-14'
-    },
-    {
-      id: 3,
-      title: 'Тайны старого особняка',
-      author: { username: 'Author3', id: 3 },
-      description: 'Детективная история с элементами мистики, происходящая в заброшенном особняке...',
-      genre: 'horror',
-      rating: 'R',
-      tags: ['ужасы', 'мистика', 'детектив'],
-      views: 2100,
-      likes: 145,
-      chapters: 15,
-      updatedAt: '2025-01-16'
-    }
-  ];
-  renderFics();
 }
 
 function renderFics() {
@@ -319,31 +290,71 @@ function renderFics() {
     grid.classList.remove('list-view');
   }
 
-  grid.innerHTML = state.fics.map(fic => `
+  if (state.fics.length === 0) {
+    grid.innerHTML = '<p class="no-fics">Пока нет фанфиков. Будьте первым, кто создаст фанфик!</p>';
+    renderPagination();
+    return;
+  }
+
+  grid.innerHTML = state.fics.map(fic => {
+    const isAuthor = state.currentUser && fic.authorId === state.currentUser.id;
+    return `
     <div class="fic-card" onclick="window.location.href='/fic/${fic.id}'">
       <div class="fic-card-header">
         <div>
           <a href="/fic/${fic.id}" class="fic-title" onclick="event.stopPropagation()">${fic.title}</a>
-          <a href="/author/${fic.author.id}" class="fic-author" onclick="event.stopPropagation()">${fic.author.username}</a>
+          <a href="/author/${fic.author?.id || fic.authorId}" class="fic-author" onclick="event.stopPropagation()">${fic.author?.username || 'Unknown'}</a>
         </div>
+        ${isAuthor ? `<button class="fic-delete-btn" onclick="event.stopPropagation(); deleteFic(${fic.id})" title="Удалить фанфик">🗑️</button>` : ''}
       </div>
-      <p class="fic-description">${fic.description}</p>
+      <p class="fic-description">${fic.description || ''}</p>
       <div class="fic-tags">
-        ${fic.tags.map(tag => `<span class="fic-tag">${tag}</span>`).join('')}
+        ${(fic.tags || []).map(tag => `<span class="fic-tag">${tag}</span>`).join('')}
       </div>
       <div class="fic-meta">
         <div class="fic-stats">
-          <span class="fic-stat">👁 ${fic.views}</span>
-          <span class="fic-stat">❤️ ${fic.likes}</span>
-          <span class="fic-stat">📖 ${fic.chapters} глав</span>
+          <span class="fic-stat">👁 ${fic.views || 0}</span>
+          <span class="fic-stat">❤️ ${fic.likes || 0}</span>
+          <span class="fic-stat">📖 ${fic.chapters || 0} глав</span>
         </div>
-        <div class="fic-rating">⭐ ${fic.rating}</div>
+        <div class="fic-rating">⭐ ${fic.rating || '—'}</div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   renderPagination();
 }
+
+async function deleteFic(ficId) {
+  if (!confirm('Вы уверены, что хотите удалить этот фанфик? Это действие нельзя отменить.')) {
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE}/fics/${ficId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.ok) {
+      alert('Фанфик успешно удален');
+      loadFics();
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Ошибка при удалении фанфика');
+    }
+  } catch (error) {
+    console.error('Error deleting fic:', error);
+    alert('Ошибка подключения к серверу');
+  }
+}
+
+// Export for global access
+window.deleteFic = deleteFic;
 
 function updateViewMode() {
   const grid = document.getElementById('fics-grid');
