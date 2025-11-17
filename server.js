@@ -5,6 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs').promises;
+const db = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,19 +29,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// In-memory database (для демо, в продакшене использовать реальную БД)
-let users = [];
-let fics = [];
-let chapters = [];
-let comments = [];
-
-// Initialize with empty data (only real user-uploaded fics will be shown)
+// Initialize database
 async function initData() {
-  // Start with empty arrays - only real users and fics will be stored
-  users = [];
-  fics = [];
-  chapters = [];
-  comments = [];
+  await db.initDatabase();
 }
 
 // Auth Routes
@@ -52,32 +43,32 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Все поля обязательны' });
     }
 
-    if (users.find(u => u.email === email)) {
+    // Проверяем существование пользователя
+    const existingUserByEmail = await db.getUserByEmail(email);
+    if (existingUserByEmail) {
       return res.status(400).json({ error: 'Email уже используется' });
     }
 
-    if (users.find(u => u.username === username)) {
+    const existingUserByUsername = await db.getUserByUsername(username);
+    if (existingUserByUsername) {
       return res.status(400).json({ error: 'Имя пользователя уже занято' });
     }
 
-    const newUser = {
-      id: users.length + 1,
+    const newUser = await db.createUser({
       username,
       email,
       password, // В продакшене хешировать пароль!
-      createdAt: new Date()
-    };
-
-    users.push(newUser);
+    });
 
     const { password: _, ...userWithoutPassword } = newUser;
-    const token = `token_${newUser.id}_${Date.now()}`; // Простой токен для демо
+    const token = `token_${newUser.id}_${Date.now()}`;
 
     res.json({
       user: userWithoutPassword,
       token
     });
   } catch (error) {
+    console.error('Register error:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -86,9 +77,9 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = users.find(u => u.email === email && u.password === password);
+    const user = await db.getUserByEmail(email);
 
-    if (!user) {
+    if (!user || user.password !== password) {
       return res.status(401).json({ error: 'Неверный email или пароль' });
     }
 
@@ -100,6 +91,7 @@ app.post('/api/auth/login', async (req, res) => {
       token
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -187,19 +179,16 @@ app.get('/api/auth/google/callback', async (req, res) => {
     }
 
     // Найти или создать пользователя
-    let user = users.find(u => u.email === googleUser.email);
+    let user = await db.getUserByEmail(googleUser.email);
     
     if (!user) {
-      user = {
-        id: users.length + 1,
+      user = await db.createUser({
         username: googleUser.name || `GoogleUser_${Date.now()}`,
         email: googleUser.email,
         password: null,
         provider: 'google',
-        avatar: googleUser.picture || null,
-        createdAt: new Date()
-      };
-      users.push(user);
+        avatar: googleUser.picture || null
+      });
     }
 
     const { password: _, ...userWithoutPassword } = user;
@@ -234,18 +223,15 @@ app.get('/api/auth/facebook/callback', async (req, res) => {
     const email = `facebook_${Date.now()}@example.com`;
     const username = `FacebookUser_${Date.now()}`;
     
-    let user = users.find(u => u.email === email);
+    let user = await db.getUserByEmail(email);
     
     if (!user) {
-      user = {
-        id: users.length + 1,
+      user = await db.createUser({
         username,
         email,
         password: null,
-        provider: 'facebook',
-        createdAt: new Date()
-      };
-      users.push(user);
+        provider: 'facebook'
+      });
     }
 
     const { password: _, ...userWithoutPassword } = user;
@@ -269,33 +255,13 @@ app.get('/api/auth/facebook/callback', async (req, res) => {
 // Fics Routes
 app.get('/api/fics', async (req, res) => {
   try {
-    let filteredFics = [...fics];
+    const filters = {
+      genre: req.query.genre,
+      rating: req.query.rating,
+      sort: req.query.sort || 'newest'
+    };
 
-    // Apply filters
-    if (req.query.genre) {
-      filteredFics = filteredFics.filter(f => f.genre === req.query.genre);
-    }
-
-    if (req.query.rating) {
-      filteredFics = filteredFics.filter(f => f.rating === req.query.rating);
-    }
-
-    // Sort
-    const sortBy = req.query.sort || 'newest';
-    switch (sortBy) {
-      case 'newest':
-        filteredFics.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        break;
-      case 'popular':
-        filteredFics.sort((a, b) => b.views - a.views);
-        break;
-      case 'rating':
-        filteredFics.sort((a, b) => b.likes - a.likes);
-        break;
-      case 'views':
-        filteredFics.sort((a, b) => b.views - a.views);
-        break;
-    }
+    let allFics = await db.getAllFics(filters);
 
     // Pagination
     const page = parseInt(req.query.page) || 1;
@@ -303,53 +269,59 @@ app.get('/api/fics', async (req, res) => {
     const start = (page - 1) * perPage;
     const end = start + perPage;
 
-    const paginatedFics = filteredFics.slice(start, end);
+    const paginatedFics = allFics.slice(start, end);
 
     // Add author info
-    const ficsWithAuthors = paginatedFics.map(fic => ({
-      ...fic,
-      author: users.find(u => u.id === fic.authorId) || { username: 'Unknown', id: fic.authorId }
+    const ficsWithAuthors = await Promise.all(paginatedFics.map(async (fic) => {
+      const author = await db.getUserById(fic.authorId);
+      return {
+        ...fic,
+        author: author ? { username: author.username, id: author.id } : { username: 'Unknown', id: fic.authorId }
+      };
     }));
 
     res.json({
       fics: ficsWithAuthors,
-      total: filteredFics.length,
-      totalPages: Math.ceil(filteredFics.length / perPage),
+      total: allFics.length,
+      totalPages: Math.ceil(allFics.length / perPage),
       currentPage: page
     });
   } catch (error) {
+    console.error('Error loading fics:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
 
 app.get('/api/fics/:id', async (req, res) => {
   try {
-    const fic = fics.find(f => f.id === parseInt(req.params.id));
+    const fic = await db.getFicById(parseInt(req.params.id));
 
     if (!fic) {
       return res.status(404).json({ error: 'Фанфик не найден' });
     }
 
-    const author = users.find(u => u.id === fic.authorId);
-    fic.views++;
+    const author = await db.getUserById(fic.authorId);
+    await db.incrementFicViews(fic.id);
 
     res.json({
       ...fic,
-      author: author || { username: 'Unknown', id: fic.authorId }
+      views: (fic.views || 0) + 1,
+      author: author ? { username: author.username, id: author.id } : { username: 'Unknown', id: fic.authorId }
     });
   } catch (error) {
+    console.error('Error loading fic:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
 
 // Helper function to get user from token
-function getUserFromToken(token) {
+async function getUserFromToken(token) {
   if (!token) return null;
   // Simple token parsing - in production use JWT
   const match = token.match(/token_(\d+)_/);
   if (match) {
     const userId = parseInt(match[1]);
-    return users.find(u => u.id === userId);
+    return await db.getUserById(userId);
   }
   return null;
 }
@@ -361,7 +333,7 @@ app.post('/api/fics', async (req, res) => {
       return res.status(401).json({ error: 'Не авторизован' });
     }
 
-    const user = getUserFromToken(token);
+    const user = await getUserFromToken(token);
     if (!user) {
       return res.status(401).json({ error: 'Неверный токен' });
     }
@@ -372,26 +344,21 @@ app.post('/api/fics', async (req, res) => {
       return res.status(400).json({ error: 'Все обязательные поля должны быть заполнены' });
     }
 
-    const newFic = {
-      id: fics.length > 0 ? Math.max(...fics.map(f => f.id)) + 1 : 1,
+    const tagsArray = Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()).filter(t => t) : []);
+
+    const newFic = await db.createFic({
       title,
       description,
       genre,
       rating,
-      tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()).filter(t => t) : []),
+      tags: tagsArray,
       authorId: user.id,
-      views: 0,
-      likes: 0,
-      chapters: 0,
-      status: status || 'ongoing',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    fics.push(newFic);
+      status: status || 'ongoing'
+    });
 
     res.status(201).json(newFic);
   } catch (error) {
+    console.error('Error creating fic:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -403,13 +370,13 @@ app.delete('/api/fics/:id', async (req, res) => {
       return res.status(401).json({ error: 'Не авторизован' });
     }
 
-    const user = getUserFromToken(token);
+    const user = await getUserFromToken(token);
     if (!user) {
       return res.status(401).json({ error: 'Неверный токен' });
     }
 
     const ficId = parseInt(req.params.id);
-    const fic = fics.find(f => f.id === ficId);
+    const fic = await db.getFicById(ficId);
 
     if (!fic) {
       return res.status(404).json({ error: 'Фанфик не найден' });
@@ -419,13 +386,12 @@ app.delete('/api/fics/:id', async (req, res) => {
       return res.status(403).json({ error: 'Вы можете удалять только свои фанфики' });
     }
 
-    // Remove fic and related chapters/comments
-    fics = fics.filter(f => f.id !== ficId);
-    chapters = chapters.filter(c => c.ficId !== ficId);
-    comments = comments.filter(c => c.ficId !== ficId);
+    // Удаление фанфика (каскадное удаление глав и комментариев настроено в БД)
+    await db.deleteFic(ficId);
 
     res.json({ message: 'Фанфик успешно удален' });
   } catch (error) {
+    console.error('Error deleting fic:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -433,19 +399,19 @@ app.delete('/api/fics/:id', async (req, res) => {
 // Chapters Routes
 app.get('/api/fics/:ficId/chapters', async (req, res) => {
   try {
-    const ficChapters = chapters
-      .filter(c => c.ficId === parseInt(req.params.ficId))
-      .sort((a, b) => a.order - b.order);
+    const ficChapters = await db.getChaptersByFicId(parseInt(req.params.ficId));
     res.json(ficChapters);
   } catch (error) {
+    console.error('Error loading chapters:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
 
 app.get('/api/fics/:ficId/chapters/:chapterId', async (req, res) => {
   try {
-    const chapter = chapters.find(
-      c => c.ficId === parseInt(req.params.ficId) && c.id === parseInt(req.params.chapterId)
+    const chapter = await db.getChapterById(
+      parseInt(req.params.ficId),
+      parseInt(req.params.chapterId)
     );
 
     if (!chapter) {
@@ -454,6 +420,7 @@ app.get('/api/fics/:ficId/chapters/:chapterId', async (req, res) => {
 
     res.json(chapter);
   } catch (error) {
+    console.error('Error loading chapter:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -465,13 +432,13 @@ app.post('/api/fics/:ficId/chapters', async (req, res) => {
       return res.status(401).json({ error: 'Не авторизован' });
     }
 
-    const user = getUserFromToken(token);
+    const user = await getUserFromToken(token);
     if (!user) {
       return res.status(401).json({ error: 'Неверный токен' });
     }
 
     const ficId = parseInt(req.params.ficId);
-    const fic = fics.find(f => f.id === ficId);
+    const fic = await db.getFicById(ficId);
 
     if (!fic) {
       return res.status(404).json({ error: 'Фанфик не найден' });
@@ -487,26 +454,19 @@ app.post('/api/fics/:ficId/chapters', async (req, res) => {
       return res.status(400).json({ error: 'Название и содержание главы обязательны' });
     }
 
-    const ficChapters = chapters.filter(c => c.ficId === ficId);
+    const ficChapters = await db.getChaptersByFicId(ficId);
     const maxOrder = ficChapters.length > 0 ? Math.max(...ficChapters.map(c => c.order)) : 0;
 
-    const newChapter = {
-      id: chapters.length > 0 ? Math.max(...chapters.map(c => c.id)) + 1 : 1,
+    const newChapter = await db.createChapter({
       ficId,
       title: title.trim(),
       content: content.trim(),
-      order: maxOrder + 1,
-      words: content.trim().split(/\s+/).filter(w => w).length,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    chapters.push(newChapter);
-    fic.chapters = chapters.filter(c => c.ficId === ficId).length;
-    fic.updatedAt = new Date();
+      order: maxOrder + 1
+    });
 
     res.status(201).json(newChapter);
   } catch (error) {
+    console.error('Error creating chapter:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -518,15 +478,15 @@ app.put('/api/fics/:ficId/chapters/:chapterId', async (req, res) => {
       return res.status(401).json({ error: 'Не авторизован' });
     }
 
-    const user = getUserFromToken(token);
+    const user = await getUserFromToken(token);
     if (!user) {
       return res.status(401).json({ error: 'Неверный токен' });
     }
 
     const ficId = parseInt(req.params.ficId);
     const chapterId = parseInt(req.params.chapterId);
-    const fic = fics.find(f => f.id === ficId);
-    const chapter = chapters.find(c => c.id === chapterId && c.ficId === ficId);
+    const fic = await db.getFicById(ficId);
+    const chapter = await db.getChapterById(ficId, chapterId);
 
     if (!fic || !chapter) {
       return res.status(404).json({ error: 'Фанфик или глава не найдены' });
@@ -536,18 +496,15 @@ app.put('/api/fics/:ficId/chapters/:chapterId', async (req, res) => {
       return res.status(403).json({ error: 'Вы можете редактировать только свои главы' });
     }
 
-    const { title, content } = req.body;
+    const updates = {};
+    if (req.body.title) updates.title = req.body.title.trim();
+    if (req.body.content) updates.content = req.body.content.trim();
 
-    if (title) chapter.title = title.trim();
-    if (content) {
-      chapter.content = content.trim();
-      chapter.words = content.trim().split(/\s+/).filter(w => w).length;
-    }
-    chapter.updatedAt = new Date();
-    fic.updatedAt = new Date();
+    const updatedChapter = await db.updateChapter(ficId, chapterId, updates);
 
-    res.json(chapter);
+    res.json(updatedChapter);
   } catch (error) {
+    console.error('Error updating chapter:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -559,15 +516,15 @@ app.delete('/api/fics/:ficId/chapters/:chapterId', async (req, res) => {
       return res.status(401).json({ error: 'Не авторизован' });
     }
 
-    const user = getUserFromToken(token);
+    const user = await getUserFromToken(token);
     if (!user) {
       return res.status(401).json({ error: 'Неверный токен' });
     }
 
     const ficId = parseInt(req.params.ficId);
     const chapterId = parseInt(req.params.chapterId);
-    const fic = fics.find(f => f.id === ficId);
-    const chapter = chapters.find(c => c.id === chapterId && c.ficId === ficId);
+    const fic = await db.getFicById(ficId);
+    const chapter = await db.getChapterById(ficId, chapterId);
 
     if (!fic || !chapter) {
       return res.status(404).json({ error: 'Фанфик или глава не найдены' });
@@ -577,12 +534,11 @@ app.delete('/api/fics/:ficId/chapters/:chapterId', async (req, res) => {
       return res.status(403).json({ error: 'Вы можете удалять только свои главы' });
     }
 
-    chapters = chapters.filter(c => c.id !== chapterId);
-    fic.chapters = Math.max(0, fic.chapters - 1);
-    fic.updatedAt = new Date();
+    await db.deleteChapter(ficId, chapterId);
 
     res.json({ message: 'Глава успешно удалена' });
   } catch (error) {
+    console.error('Error deleting chapter:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -590,9 +546,10 @@ app.delete('/api/fics/:ficId/chapters/:chapterId', async (req, res) => {
 // Comments Routes
 app.get('/api/fics/:ficId/comments', async (req, res) => {
   try {
-    const ficComments = comments.filter(c => c.ficId === parseInt(req.params.ficId));
+    const ficComments = await db.getCommentsByFicId(parseInt(req.params.ficId));
     res.json(ficComments);
   } catch (error) {
+    console.error('Error loading comments:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -604,7 +561,7 @@ app.post('/api/fics/:ficId/comments', async (req, res) => {
       return res.status(401).json({ error: 'Не авторизован' });
     }
 
-    const user = getUserFromToken(token);
+    const user = await getUserFromToken(token);
     if (!user) {
       return res.status(401).json({ error: 'Неверный токен' });
     }
@@ -615,18 +572,15 @@ app.post('/api/fics/:ficId/comments', async (req, res) => {
       return res.status(400).json({ error: 'Комментарий не может быть пустым' });
     }
 
-    const newComment = {
-      id: comments.length > 0 ? Math.max(...comments.map(c => c.id)) + 1 : 1,
+    const newComment = await db.createComment({
       ficId: parseInt(req.params.ficId),
       authorId: user.id,
-      text: text.trim(),
-      createdAt: new Date()
-    };
-
-    comments.push(newComment);
+      text: text.trim()
+    });
 
     res.status(201).json(newComment);
   } catch (error) {
+    console.error('Error creating comment:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -653,29 +607,32 @@ app.get('/create', (req, res) => {
 app.get('/api/users/:id', async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
-    const user = users.find(u => u.id === userId);
+    const user = await db.getUserById(userId);
     
     if (!user) {
       return res.status(404).json({ error: 'Пользователь не найден' });
     }
 
-    const userFics = fics.filter(f => f.authorId === userId);
+    const userFics = await db.getUserFics(userId);
     const { password: _, ...userWithoutPassword } = user;
+
+    const stats = {
+      ficsCount: userFics.length,
+      totalViews: userFics.reduce((sum, f) => sum + (f.views || 0), 0),
+      totalLikes: userFics.reduce((sum, f) => sum + (f.likes || 0), 0),
+      totalChapters: userFics.reduce((sum, f) => sum + (f.chapters || 0), 0)
+    };
 
     res.json({
       ...userWithoutPassword,
-      stats: {
-        ficsCount: userFics.length,
-        totalViews: userFics.reduce((sum, f) => sum + (f.views || 0), 0),
-        totalLikes: userFics.reduce((sum, f) => sum + (f.likes || 0), 0),
-        totalChapters: userFics.reduce((sum, f) => sum + (f.chapters || 0), 0)
-      },
+      stats,
       fics: userFics.map(fic => ({
         ...fic,
         author: userWithoutPassword
       }))
     });
   } catch (error) {
+    console.error('Error loading user:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -683,15 +640,17 @@ app.get('/api/users/:id', async (req, res) => {
 app.get('/api/users/:id/fics', async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
-    const userFics = fics.filter(f => f.authorId === userId);
+    const userFics = await db.getUserFics(userId);
+    const user = await db.getUserById(userId);
     
     const ficsWithAuthors = userFics.map(fic => ({
       ...fic,
-      author: users.find(u => u.id === fic.authorId) || { username: 'Unknown', id: fic.authorId }
+      author: user ? { username: user.username, id: user.id } : { username: 'Unknown', id: userId }
     }));
 
     res.json(ficsWithAuthors);
   } catch (error) {
+    console.error('Error loading user fics:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
