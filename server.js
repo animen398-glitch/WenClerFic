@@ -184,10 +184,42 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// OAuth Routes
+// OAuth Routes (Demo mode - без реальных ключей)
 app.get('/api/auth/google', (req, res) => {
   const action = req.query.action || 'login';
-  // В продакшене использовать реальный OAuth URL
+  
+  // Если ключи не настроены, используем демо-режим
+  if (!OAUTH_CONFIG.google.clientId || OAUTH_CONFIG.google.clientId === 'YOUR_GOOGLE_CLIENT_ID') {
+    // Демо-режим: создаем тестового пользователя
+    const email = `google_demo_${Date.now()}@example.com`;
+    const username = `GoogleUser_${Math.floor(Math.random() * 1000)}`;
+    
+    let user = users.find(u => u.email === email);
+    
+    if (!user) {
+      user = {
+        id: users.length + 1,
+        username,
+        email,
+        password: null,
+        provider: 'google',
+        createdAt: new Date()
+      };
+      users.push(user);
+    }
+
+    const { password: _, ...userWithoutPassword } = user;
+    const token = `token_${user.id}_${Date.now()}`;
+
+    return res.json({
+      demo: true,
+      user: userWithoutPassword,
+      token,
+      message: 'Демо-режим: Google авторизация (без реальных ключей)'
+    });
+  }
+  
+  // Реальный OAuth (если ключи настроены)
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
     `client_id=${OAUTH_CONFIG.google.clientId}&` +
     `redirect_uri=${encodeURIComponent(OAUTH_CONFIG.google.redirectUri)}&` +
@@ -200,7 +232,39 @@ app.get('/api/auth/google', (req, res) => {
 
 app.get('/api/auth/facebook', (req, res) => {
   const action = req.query.action || 'login';
-  // В продакшене использовать реальный OAuth URL
+  
+  // Если ключи не настроены, используем демо-режим
+  if (!OAUTH_CONFIG.facebook.clientId || OAUTH_CONFIG.facebook.clientId === 'YOUR_FACEBOOK_APP_ID') {
+    // Демо-режим: создаем тестового пользователя
+    const email = `facebook_demo_${Date.now()}@example.com`;
+    const username = `FacebookUser_${Math.floor(Math.random() * 1000)}`;
+    
+    let user = users.find(u => u.email === email);
+    
+    if (!user) {
+      user = {
+        id: users.length + 1,
+        username,
+        email,
+        password: null,
+        provider: 'facebook',
+        createdAt: new Date()
+      };
+      users.push(user);
+    }
+
+    const { password: _, ...userWithoutPassword } = user;
+    const token = `token_${user.id}_${Date.now()}`;
+
+    return res.json({
+      demo: true,
+      user: userWithoutPassword,
+      token,
+      message: 'Демо-режим: Facebook авторизация (без реальных ключей)'
+    });
+  }
+  
+  // Реальный OAuth (если ключи настроены)
   const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?` +
     `client_id=${OAUTH_CONFIG.facebook.clientId}&` +
     `redirect_uri=${encodeURIComponent(OAUTH_CONFIG.facebook.redirectUri)}&` +

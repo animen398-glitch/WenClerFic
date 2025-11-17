@@ -413,6 +413,17 @@ async function handleOAuth(provider, action) {
     
     const data = await response.json();
     
+    // Демо-режим: если сервер вернул пользователя напрямую
+    if (data.demo && data.user) {
+      state.currentUser = data.user;
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('token', data.token);
+      updateUserUI();
+      document.getElementById('auth-modal').style.display = 'none';
+      alert(`✅ ${data.message || 'Демо-авторизация успешна!'}\n\nВы вошли как: ${data.user.username}`);
+      return;
+    }
+    
     if (data.authUrl) {
       // Open OAuth popup
       const width = 500;
