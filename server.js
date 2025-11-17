@@ -36,15 +36,91 @@ let comments = [];
 
 // Initialize with sample data
 async function initData() {
-  // Sample users (для тестирования)
+  // Sample users
   users = [
     { id: 1, username: 'Author1', email: 'author1@test.com', password: 'password123', createdAt: new Date() },
     { id: 2, username: 'Author2', email: 'author2@test.com', password: 'password123', createdAt: new Date() },
     { id: 3, username: 'Author3', email: 'author3@test.com', password: 'password123', createdAt: new Date() }
   ];
 
-  // Начинаем с пустого списка фанфиков - пользователи будут создавать свои
-  fics = [];
+  // Sample fics
+  fics = [
+    {
+      id: 1,
+      title: 'Приключения в магическом мире',
+      authorId: 1,
+      description: 'История о молодом волшебнике, который открывает для себя новый мир магии и приключений. Вместе с друзьями он отправляется в опасное путешествие, чтобы спасти королевство от темных сил.',
+      genre: 'fantasy',
+      rating: 'PG-13',
+      tags: ['магия', 'приключения', 'фэнтези', 'дружба'],
+      views: 1250,
+      likes: 89,
+      chapters: 12,
+      status: 'ongoing',
+      createdAt: new Date('2024-12-01'),
+      updatedAt: new Date('2025-01-15')
+    },
+    {
+      id: 2,
+      title: 'Романтика в большом городе',
+      authorId: 2,
+      description: 'Современная история любви, разворачивающаяся на фоне городской суеты. Два незнакомца встречаются случайно и их жизни переплетаются самым неожиданным образом.',
+      genre: 'romance',
+      rating: 'PG',
+      tags: ['романтика', 'современность', 'любовь'],
+      views: 890,
+      likes: 67,
+      chapters: 8,
+      status: 'completed',
+      createdAt: new Date('2024-11-15'),
+      updatedAt: new Date('2025-01-14')
+    },
+    {
+      id: 3,
+      title: 'Тайны старого особняка',
+      authorId: 3,
+      description: 'Детективная история с элементами мистики, происходящая в заброшенном особняке. Группа друзей решает провести ночь в старом доме, но быстро понимает, что они не одни...',
+      genre: 'horror',
+      rating: 'R',
+      tags: ['ужасы', 'мистика', 'детектив', 'триллер'],
+      views: 2100,
+      likes: 145,
+      chapters: 15,
+      status: 'ongoing',
+      createdAt: new Date('2024-10-20'),
+      updatedAt: new Date('2025-01-16')
+    },
+    {
+      id: 4,
+      title: 'Космическая одиссея',
+      authorId: 1,
+      description: 'Эпическая сага о космических путешественниках, исследующих далекие галактики. Они сталкиваются с невероятными цивилизациями и опасностями космоса.',
+      genre: 'adventure',
+      rating: 'PG-13',
+      tags: ['космос', 'научная фантастика', 'приключения'],
+      views: 1567,
+      likes: 112,
+      chapters: 20,
+      status: 'ongoing',
+      createdAt: new Date('2024-09-10'),
+      updatedAt: new Date('2025-01-17')
+    },
+    {
+      id: 5,
+      title: 'Смех сквозь слезы',
+      authorId: 2,
+      description: 'Комедийная история о неудачливом актере, который пытается найти свое место в мире развлечений. Полна забавных ситуаций и неожиданных поворотов.',
+      genre: 'comedy',
+      rating: 'PG',
+      tags: ['комедия', 'юмор', 'современность'],
+      views: 743,
+      likes: 54,
+      chapters: 6,
+      status: 'completed',
+      createdAt: new Date('2024-12-20'),
+      updatedAt: new Date('2025-01-10')
+    }
+  ];
 }
 
 // Auth Routes
@@ -108,42 +184,10 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// OAuth Routes (Demo mode - без реальных ключей)
+// OAuth Routes
 app.get('/api/auth/google', (req, res) => {
   const action = req.query.action || 'login';
-  
-  // Если ключи не настроены, используем демо-режим
-  if (!OAUTH_CONFIG.google.clientId || OAUTH_CONFIG.google.clientId === 'YOUR_GOOGLE_CLIENT_ID') {
-    // Демо-режим: создаем тестового пользователя
-    const email = `google_demo_${Date.now()}@example.com`;
-    const username = `GoogleUser_${Math.floor(Math.random() * 1000)}`;
-    
-    let user = users.find(u => u.email === email);
-    
-    if (!user) {
-      user = {
-        id: users.length + 1,
-        username,
-        email,
-        password: null,
-        provider: 'google',
-        createdAt: new Date()
-      };
-      users.push(user);
-    }
-
-    const { password: _, ...userWithoutPassword } = user;
-    const token = `token_${user.id}_${Date.now()}`;
-
-    return res.json({
-      demo: true,
-      user: userWithoutPassword,
-      token,
-      message: 'Демо-режим: Google авторизация (без реальных ключей)'
-    });
-  }
-  
-  // Реальный OAuth (если ключи настроены)
+  // В продакшене использовать реальный OAuth URL
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
     `client_id=${OAUTH_CONFIG.google.clientId}&` +
     `redirect_uri=${encodeURIComponent(OAUTH_CONFIG.google.redirectUri)}&` +
@@ -157,38 +201,15 @@ app.get('/api/auth/google', (req, res) => {
 app.get('/api/auth/facebook', (req, res) => {
   const action = req.query.action || 'login';
   
-  // Если ключи не настроены, используем демо-режим
+  // Проверка наличия ключей
   if (!OAUTH_CONFIG.facebook.clientId || OAUTH_CONFIG.facebook.clientId === 'YOUR_FACEBOOK_APP_ID') {
-    // Демо-режим: создаем тестового пользователя
-    const email = `facebook_demo_${Date.now()}@example.com`;
-    const username = `FacebookUser_${Math.floor(Math.random() * 1000)}`;
-    
-    let user = users.find(u => u.email === email);
-    
-    if (!user) {
-      user = {
-        id: users.length + 1,
-        username,
-        email,
-        password: null,
-        provider: 'facebook',
-        createdAt: new Date()
-      };
-      users.push(user);
-    }
-
-    const { password: _, ...userWithoutPassword } = user;
-    const token = `token_${user.id}_${Date.now()}`;
-
-    return res.json({
-      demo: true,
-      user: userWithoutPassword,
-      token,
-      message: 'Демо-режим: Facebook авторизация (без реальных ключей)'
+    return res.status(400).json({ 
+      error: 'Facebook OAuth не настроен',
+      message: 'Добавьте FACEBOOK_APP_ID и FACEBOOK_APP_SECRET в файл .env'
     });
   }
   
-  // Реальный OAuth (если ключи настроены)
+  // Реальный OAuth URL
   const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?` +
     `client_id=${OAUTH_CONFIG.facebook.clientId}&` +
     `redirect_uri=${encodeURIComponent(OAUTH_CONFIG.facebook.redirectUri)}&` +
@@ -371,10 +392,7 @@ app.post('/api/fics', async (req, res) => {
       return res.status(401).json({ error: 'Не авторизован' });
     }
 
-    const { title, description, genre, rating, tags, type, status, cover, fullHeader, contest } = req.body;
-
-    // Получаем автора из токена (упрощенная версия)
-    const userId = parseInt(token.split('_')[1]) || 1;
+    const { title, description, genre, rating, tags } = req.body;
 
     const newFic = {
       id: fics.length + 1,
@@ -382,16 +400,12 @@ app.post('/api/fics', async (req, res) => {
       description,
       genre,
       rating,
-      type: type || 'original',
       tags: Array.isArray(tags) ? tags : [],
-      authorId: userId,
-      cover: cover || null,
+      authorId: 1, // В реальном приложении извлекать из токена
       views: 0,
       likes: 0,
       chapters: 0,
-      status: status || 'ongoing',
-      fullHeader: fullHeader || false,
-      contest: contest || false,
+      status: 'ongoing',
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -403,40 +417,6 @@ app.post('/api/fics', async (req, res) => {
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
-
-// Upload cover
-const multer = require('multer');
-const upload = multer({ 
-  dest: 'uploads/covers/',
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Разрешены только файлы: .jpg, .png, .webp'));
-    }
-  }
-});
-
-app.post('/api/upload/cover', upload.single('cover'), (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'Файл не загружен' });
-    }
-
-    // В продакшене сохранять файл в облачное хранилище
-    // Для демо возвращаем путь к файлу
-    const fileUrl = `/uploads/covers/${req.file.filename}`;
-    
-    res.json({ url: fileUrl });
-  } catch (error) {
-    res.status(500).json({ error: 'Ошибка загрузки файла' });
-  }
-});
-
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Chapters Routes
 app.get('/api/fics/:ficId/chapters', async (req, res) => {

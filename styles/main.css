@@ -69,12 +69,7 @@ body {
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  font-size: 2rem;
 }
 
 .main-nav {
