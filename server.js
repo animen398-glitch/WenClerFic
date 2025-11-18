@@ -396,6 +396,51 @@ app.delete('/api/fics/:id', async (req, res) => {
   }
 });
 
+// Endpoint для удаления всех тестовых фанфиков
+app.delete('/api/fics/cleanup/test', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Не авторизован' });
+    }
+
+    const user = await getUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+
+    // Получаем всех пользователей с тестовыми email
+    const allFics = await db.getAllFics({});
+    const testUserIds = [];
+    
+    for (const fic of allFics) {
+      const author = await db.getUserById(fic.authorId);
+      if (author && (author.email.includes('@test.com') || author.email.includes('test@') || author.username.toLowerCase().includes('test'))) {
+        if (!testUserIds.includes(fic.authorId)) {
+          testUserIds.push(fic.authorId);
+        }
+      }
+    }
+
+    // Удаляем все фанфики тестовых пользователей
+    let deletedCount = 0;
+    for (const fic of allFics) {
+      if (testUserIds.includes(fic.authorId)) {
+        await db.deleteFic(fic.id);
+        deletedCount++;
+      }
+    }
+
+    res.json({ 
+      message: `Удалено ${deletedCount} тестовых фанфиков`,
+      deletedCount 
+    });
+  } catch (error) {
+    console.error('Error cleaning up test fics:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
 // Chapters Routes
 app.get('/api/fics/:ficId/chapters', async (req, res) => {
   try {

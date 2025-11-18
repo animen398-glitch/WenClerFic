@@ -11,7 +11,7 @@
   <style>
     .profile-header {
       background: linear-gradient(135deg, #6b46c1 0%, #9333ea 100%);
-      padding: 3rem 0;
+      padding: 3rem 0 2rem;
       margin-bottom: 2rem;
     }
     .profile-content {
@@ -31,39 +31,103 @@
       border-radius: 12px;
       padding: 1.5rem;
       margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     .profile-avatar {
-      width: 120px;
-      height: 120px;
+      width: 150px;
+      height: 150px;
       border-radius: 50%;
       background: var(--accent);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 3rem;
+      font-size: 4rem;
       margin: 0 auto 1rem;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .profile-username {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0.5rem 0;
+      color: white;
+    }
+    .profile-email {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 1rem;
+    }
+    .profile-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-direction: column;
+      margin-top: 1rem;
+    }
+    .profile-actions .btn {
+      width: 100%;
     }
     .profile-stats {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 1rem;
       margin-top: 1.5rem;
     }
     .stat-card {
       text-align: center;
-      padding: 1rem;
+      padding: 1.5rem 1rem;
       background: var(--bg-secondary);
       border-radius: 8px;
+      transition: transform 0.2s;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
     }
     .stat-value {
-      font-size: 1.5rem;
-      font-weight: 600;
+      font-size: 2rem;
+      font-weight: 700;
       color: var(--accent);
+      display: block;
     }
     .stat-label {
       font-size: 0.875rem;
       color: var(--text-secondary);
       margin-top: 0.5rem;
+    }
+    .profile-tabs {
+      display: flex;
+      gap: 1rem;
+      border-bottom: 2px solid var(--bg-secondary);
+      margin-bottom: 2rem;
+    }
+    .profile-tab {
+      padding: 1rem 1.5rem;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1rem;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .profile-tab:hover {
+      color: var(--accent);
+    }
+    .profile-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .profile-tab-content {
+      display: none;
+    }
+    .profile-tab-content.active {
+      display: block;
     }
     .fics-list {
       display: grid;
@@ -76,13 +140,74 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid var(--bg-secondary);
+    }
+    .fic-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .fic-item-info {
+      flex: 1;
     }
     .fic-item-info h3 {
       margin: 0 0 0.5rem 0;
     }
+    .fic-item-info h3 a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .fic-item-info h3 a:hover {
+      color: var(--primary-color);
+    }
     .fic-item-info p {
       color: var(--text-secondary);
-      margin: 0;
+      margin: 0.5rem 0;
+      line-height: 1.5;
+    }
+    .fic-item-meta {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+    .fic-item-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .fic-item-actions .btn {
+      white-space: nowrap;
+    }
+    .about-section {
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+    .about-section p {
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 768px) {
+      .profile-content {
+        flex-direction: column;
+      }
+      .profile-sidebar {
+        width: 100%;
+      }
+      .profile-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .fic-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+      .fic-item-actions {
+        width: 100%;
+      }
+      .fic-item-actions .btn {
+        flex: 1;
+      }
     }
   </style>
 </head>
@@ -121,27 +246,32 @@
       <div class="container">
         <div class="profile-content">
           <div class="profile-sidebar">
-            <div class="profile-card">
+            <div class="profile-card" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);">
               <div class="profile-avatar" id="profile-avatar">👤</div>
-              <h2 id="profile-username" style="text-align: center; margin: 0;">Загрузка...</h2>
-              <p id="profile-email" style="text-align: center; color: var(--text-secondary); margin-top: 0.5rem;">—</p>
+              <h2 class="profile-username" id="profile-username">Загрузка...</h2>
+              <p class="profile-email" id="profile-email">—</p>
+              <div class="profile-actions" id="profile-actions"></div>
             </div>
           </div>
           <div class="profile-main">
-            <div class="profile-card">
-              <h3 style="margin-top: 0;">Статистика</h3>
+            <div class="profile-card" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);">
+              <h3 style="margin-top: 0; color: white;">Статистика</h3>
               <div class="profile-stats" id="profile-stats">
-                <div class="stat-card">
-                  <div class="stat-value" id="stat-fics">0</div>
-                  <div class="stat-label">Фанфиков</div>
+                <div class="stat-card" style="background: rgba(255, 255, 255, 0.1);">
+                  <span class="stat-value" id="stat-fics" style="color: white;">0</span>
+                  <div class="stat-label" style="color: rgba(255, 255, 255, 0.8);">Фанфиков</div>
                 </div>
-                <div class="stat-card">
-                  <div class="stat-value" id="stat-views">0</div>
-                  <div class="stat-label">Просмотров</div>
+                <div class="stat-card" style="background: rgba(255, 255, 255, 0.1);">
+                  <span class="stat-value" id="stat-views" style="color: white;">0</span>
+                  <div class="stat-label" style="color: rgba(255, 255, 255, 0.8);">Просмотров</div>
                 </div>
-                <div class="stat-card">
-                  <div class="stat-value" id="stat-likes">0</div>
-                  <div class="stat-label">Лайков</div>
+                <div class="stat-card" style="background: rgba(255, 255, 255, 0.1);">
+                  <span class="stat-value" id="stat-likes" style="color: white;">0</span>
+                  <div class="stat-label" style="color: rgba(255, 255, 255, 0.8);">Лайков</div>
+                </div>
+                <div class="stat-card" style="background: rgba(255, 255, 255, 0.1);">
+                  <span class="stat-value" id="stat-chapters" style="color: white;">0</span>
+                  <div class="stat-label" style="color: rgba(255, 255, 255, 0.8);">Глав</div>
                 </div>
               </div>
             </div>
@@ -151,10 +281,29 @@
     </div>
 
     <div class="container">
-      <div class="profile-card">
-        <h3>Фанфики автора</h3>
-        <div class="fics-list" id="fics-list">
-          <p>Загрузка...</p>
+      <div class="profile-tabs">
+        <button class="profile-tab active" data-tab="fics">Фанфики</button>
+        <button class="profile-tab" data-tab="about">О себе</button>
+      </div>
+
+      <div class="profile-tab-content active" id="tab-fics">
+        <div class="profile-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0;">Фанфики автора</h3>
+            <span id="fics-count" style="color: var(--text-secondary);">0 фанфиков</span>
+          </div>
+          <div class="fics-list" id="fics-list">
+            <p>Загрузка...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-tab-content" id="tab-about">
+        <div class="profile-card">
+          <h3 style="margin-top: 0;">О себе</h3>
+          <div class="about-section" id="about-section">
+            <p style="color: var(--text-secondary);">Информация о пользователе пока не добавлена.</p>
+          </div>
         </div>
       </div>
     </div>

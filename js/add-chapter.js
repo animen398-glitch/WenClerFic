@@ -52,7 +52,14 @@ async function loadFic() {
         return;
       }
 
-      document.getElementById('fic-info').textContent = `Фанфик: ${data.title}`;
+      const ficInfo = document.getElementById('fic-info');
+      const ficLink = document.getElementById('fic-link');
+      ficLink.textContent = data.title;
+      ficLink.href = `/fic/${ficId}`;
+      
+      const backBtn = document.getElementById('back-to-fic');
+      backBtn.href = `/fic/${ficId}`;
+      backBtn.style.display = 'block';
     } else {
       showError(data.error || 'Ошибка загрузки фанфика');
     }
@@ -66,6 +73,7 @@ function setupEventListeners() {
   const form = document.getElementById('add-chapter-form');
   const cancelBtn = document.getElementById('cancel-btn');
   const contentTextarea = document.getElementById('chapter-content');
+  const titleInput = document.getElementById('chapter-title');
 
   form.addEventListener('submit', handleSubmit);
   cancelBtn.addEventListener('click', () => {
@@ -74,10 +82,77 @@ function setupEventListeners() {
     }
   });
 
-  contentTextarea.addEventListener('input', () => {
-    const words = contentTextarea.value.trim().split(/\s+/).filter(w => w).length;
-    document.getElementById('content-word-count').textContent = words;
+  // Title character count
+  titleInput.addEventListener('input', () => {
+    const length = titleInput.value.length;
+    document.getElementById('title-char-count').textContent = `(${length}/200)`;
   });
+
+  // Content word and character count
+  contentTextarea.addEventListener('input', () => {
+    const text = contentTextarea.value.trim();
+    const words = text.split(/\s+/).filter(w => w).length;
+    const chars = text.length;
+    
+    document.getElementById('content-word-count').textContent = words;
+    document.getElementById('content-word-count-display').textContent = words;
+    document.getElementById('content-char-count').textContent = chars;
+    
+    // Validate minimum words
+    const submitBtn = document.getElementById('submit-btn');
+    if (words < 100) {
+      submitBtn.disabled = true;
+      submitBtn.title = 'Минимум 100 слов для публикации';
+    } else {
+      submitBtn.disabled = false;
+      submitBtn.title = '';
+    }
+  });
+
+  // Auto-save draft to localStorage
+  let saveTimeout;
+  [titleInput, contentTextarea].forEach(input => {
+    input.addEventListener('input', () => {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        saveDraft();
+      }, 2000);
+    });
+  });
+
+  // Load draft on page load
+  loadDraft();
+}
+
+function saveDraft() {
+  if (!ficId) return;
+  const draft = {
+    title: document.getElementById('chapter-title').value,
+    content: document.getElementById('chapter-content').value,
+    timestamp: Date.now()
+  };
+  localStorage.setItem(`chapter-draft-${ficId}`, JSON.stringify(draft));
+}
+
+function loadDraft() {
+  if (!ficId) return;
+  const draftStr = localStorage.getItem(`chapter-draft-${ficId}`);
+  if (draftStr) {
+    try {
+      const draft = JSON.parse(draftStr);
+      // Only load if draft is recent (less than 7 days old)
+      if (Date.now() - draft.timestamp < 7 * 24 * 60 * 60 * 1000) {
+        if (confirm('Найден черновик главы. Загрузить его?')) {
+          document.getElementById('chapter-title').value = draft.title || '';
+          document.getElementById('chapter-content').value = draft.content || '';
+          // Trigger input event to update counts
+          document.getElementById('chapter-content').dispatchEvent(new Event('input'));
+        }
+      }
+    } catch (e) {
+      console.error('Error loading draft:', e);
+    }
+  }
 }
 
 async function handleSubmit(e) {
@@ -112,12 +187,14 @@ async function handleSubmit(e) {
     const data = await response.json();
 
     if (response.ok) {
+      // Clear draft
+      localStorage.removeItem(`chapter-draft-${ficId}`);
       alert('Глава успешно добавлена!');
       window.location.href = `/fic/${ficId}`;
     } else {
       alert(data.error || 'Ошибка при добавлении главы');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Добавить главу';
+      submitBtn.textContent = 'Опубликовать главу';
     }
   } catch (error) {
     console.error('Error adding chapter:', error);
