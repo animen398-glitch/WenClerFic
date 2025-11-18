@@ -9,27 +9,128 @@ let isEditMode = false;
 let currentChapter = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
-  getIdsFromUrl();
-  if (ficId) {
-    loadFic();
-    if (isEditMode && chapterId) {
-      loadChapter();
+  // Ждем загрузки app.js для инициализации модального окна
+  setTimeout(() => {
+    checkAuth();
+    getIdsFromUrl();
+    if (ficId) {
+      loadFic();
+      if (isEditMode && chapterId) {
+        loadChapter();
+      }
+      setupEventListeners();
     }
-    setupEventListeners();
-  }
+  }, 100);
 });
 
 function checkAuth() {
   const user = localStorage.getItem('user');
-  if (user) {
-    currentUser = JSON.parse(user);
-    updateUserUI();
+  const token = localStorage.getItem('token');
+  
+  if (user && token) {
+    try {
+      currentUser = JSON.parse(user);
+      updateUserUI();
+    } catch (e) {
+      console.error('Error parsing user data:', e);
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      showLoginPrompt();
+    }
   } else {
-    alert('Войдите, чтобы добавить главу');
-    window.location.href = '/';
+    showLoginPrompt();
   }
 }
+
+function showLoginPrompt() {
+  const container = document.querySelector('.main-content .container');
+  if (container && !document.getElementById('login-prompt')) {
+    const createPage = container.querySelector('.create-page');
+    if (createPage) {
+      const prompt = document.createElement('div');
+      prompt.id = 'login-prompt';
+      prompt.style.cssText = 'background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; text-align: center;';
+      prompt.innerHTML = `
+        <p style="margin-bottom: 1rem; color: var(--text-primary);">
+          Для добавления главы необходимо войти в систему
+        </p>
+        <button class="btn btn-primary" onclick="showAuthModalFromAddChapter()">
+          Войти или Зарегистрироваться
+        </button>
+      `;
+      const form = document.getElementById('add-chapter-form');
+      if (form && form.parentNode) {
+        form.parentNode.insertBefore(prompt, form);
+      } else {
+        createPage.insertBefore(prompt, createPage.firstChild);
+      }
+      
+      // Блокируем форму
+      if (form) {
+        form.style.opacity = '0.5';
+        form.style.pointerEvents = 'none';
+      }
+    } else {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 3rem;">
+          <h2 style="margin-bottom: 1rem;">Требуется авторизация</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+            Для добавления главы необходимо войти в систему
+          </p>
+          <div style="display: flex; gap: 1rem; justify-content: center;">
+            <a href="/" class="btn btn-outline">Вернуться на главную</a>
+            <button class="btn btn-primary" onclick="window.showAuthModal && window.showAuthModal()">
+              Войти
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  }
+}
+
+function showAuthModalFromAddChapter() {
+  if (window.showAuthModal) {
+    window.showAuthModal();
+  } else {
+    setTimeout(() => {
+      if (window.showAuthModal) {
+        window.showAuthModal();
+      } else {
+        window.location.href = '/';
+      }
+    }, 100);
+  }
+}
+
+window.showAuthModalFromAddChapter = showAuthModalFromAddChapter;
+
+// Функция вызывается после успешного входа
+window.onAuthSuccess = function() {
+  const user = localStorage.getItem('user');
+  const token = localStorage.getItem('token');
+  
+  if (user && token) {
+    try {
+      currentUser = JSON.parse(user);
+      updateUserUI();
+      
+      // Убираем промпт и разблокируем форму
+      const prompt = document.getElementById('login-prompt');
+      if (prompt) {
+        prompt.remove();
+      }
+      
+      const form = document.getElementById('add-chapter-form');
+      if (form) {
+        form.style.opacity = '1';
+        form.style.pointerEvents = 'auto';
+      }
+    } catch (e) {
+      console.error('Error parsing user data:', e);
+    }
+  }
+};
 
 function updateUserUI() {
   const userNameEl = document.getElementById('user-name');
@@ -230,9 +331,27 @@ async function loadChapter() {
 async function handleSubmit(e) {
   e.preventDefault();
 
-  if (!currentUser) {
+  // Проверяем авторизацию перед отправкой
+  const user = localStorage.getItem('user');
+  const token = localStorage.getItem('token');
+  
+  if (!user || !token) {
     alert('Войдите, чтобы добавить главу');
+    window.location.href = '/';
     return;
+  }
+  
+  // Обновляем currentUser на случай, если он был очищен
+  if (!currentUser && user) {
+    try {
+      currentUser = JSON.parse(user);
+    } catch (e) {
+      alert('Ошибка авторизации. Пожалуйста, войдите снова.');
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      window.location.href = '/';
+      return;
+    }
   }
 
   const formData = new FormData(e.target);

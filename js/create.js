@@ -4,22 +4,110 @@ const API_BASE = window.location.origin + '/api';
 let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
-  setupEventListeners();
-  setupCharCounter();
+  // Ждем загрузки app.js для инициализации модального окна
+  setTimeout(() => {
+    checkAuth();
+    setupEventListeners();
+    setupCharCounter();
+  }, 100);
 });
 
 function checkAuth() {
   const user = localStorage.getItem('user');
-  if (user) {
-    currentUser = JSON.parse(user);
-    updateUserUI();
+  const token = localStorage.getItem('token');
+  
+  if (user && token) {
+    try {
+      currentUser = JSON.parse(user);
+      updateUserUI();
+    } catch (e) {
+      console.error('Error parsing user data:', e);
+      // Очищаем поврежденные данные
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+    }
   } else {
-    // Redirect to login if not authenticated
-    alert('Войдите, чтобы создать фанфик');
-    window.location.href = '/';
+    // Не редиректим, просто показываем, что нужно войти
+    // Пользователь сможет войти через модальное окно
+    showLoginPrompt();
   }
 }
+
+function showLoginPrompt() {
+  // Показываем сообщение, но не редиректим
+  const formContainer = document.querySelector('.create-page');
+  if (formContainer && !document.getElementById('login-prompt')) {
+    const prompt = document.createElement('div');
+    prompt.id = 'login-prompt';
+    prompt.style.cssText = 'background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; text-align: center;';
+    prompt.innerHTML = `
+      <p style="margin-bottom: 1rem; color: var(--text-primary);">
+        Для создания фанфика необходимо войти в систему
+      </p>
+      <button class="btn btn-primary" onclick="showAuthModalFromCreate()">
+        Войти или Зарегистрироваться
+      </button>
+    `;
+    const form = document.getElementById('create-fic-form');
+    if (form && form.parentNode) {
+      form.parentNode.insertBefore(prompt, form);
+    } else {
+      formContainer.insertBefore(prompt, formContainer.firstChild);
+    }
+    
+    // Блокируем форму
+    if (form) {
+      form.style.opacity = '0.5';
+      form.style.pointerEvents = 'none';
+    }
+  }
+}
+
+function showAuthModalFromCreate() {
+  // Импортируем функцию показа модального окна из app.js
+  if (window.showAuthModal) {
+    window.showAuthModal();
+  } else {
+    // Ждем немного, чтобы app.js загрузился
+    setTimeout(() => {
+      if (window.showAuthModal) {
+        window.showAuthModal();
+      } else {
+        // Если функция все еще недоступна, редиректим на главную
+        window.location.href = '/';
+      }
+    }, 100);
+  }
+}
+
+window.showAuthModalFromCreate = showAuthModalFromCreate;
+
+// Функция вызывается после успешного входа
+window.onAuthSuccess = function() {
+  const user = localStorage.getItem('user');
+  const token = localStorage.getItem('token');
+  
+  if (user && token) {
+    try {
+      currentUser = JSON.parse(user);
+      updateUserUI();
+      
+      // Убираем промпт и разблокируем форму
+      const prompt = document.getElementById('login-prompt');
+      if (prompt) {
+        prompt.remove();
+      }
+      
+      const form = document.getElementById('create-fic-form');
+      if (form) {
+        form.style.opacity = '1';
+        form.style.pointerEvents = 'auto';
+      }
+    } catch (e) {
+      console.error('Error parsing user data:', e);
+    }
+  }
+};
 
 function updateUserUI() {
   const userNameEl = document.getElementById('user-name');
@@ -52,9 +140,27 @@ function setupCharCounter() {
 async function handleSubmit(e) {
   e.preventDefault();
 
-  if (!currentUser) {
+  // Проверяем авторизацию перед отправкой
+  const user = localStorage.getItem('user');
+  const token = localStorage.getItem('token');
+  
+  if (!user || !token) {
     alert('Войдите, чтобы создать фанфик');
+    showAuthModalFromCreate();
     return;
+  }
+  
+  // Обновляем currentUser на случай, если он был очищен
+  if (!currentUser && user) {
+    try {
+      currentUser = JSON.parse(user);
+    } catch (e) {
+      alert('Ошибка авторизации. Пожалуйста, войдите снова.');
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      window.location.href = '/';
+      return;
+    }
   }
 
   const formData = new FormData(e.target);

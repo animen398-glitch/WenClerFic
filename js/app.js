@@ -163,8 +163,13 @@ function setupEventListeners() {
 
 function showAuthModal() {
   const authModal = document.getElementById('auth-modal');
-  authModal.style.display = 'flex';
+  if (authModal) {
+    authModal.style.display = 'flex';
+  }
 }
+
+// Экспортируем функцию для использования в других файлах
+window.showAuthModal = showAuthModal;
 
 async function handleLogin(e) {
   e.preventDefault();
@@ -191,6 +196,11 @@ async function handleLogin(e) {
       updateUserUI();
       document.getElementById('auth-modal').style.display = 'none';
       loginForm.reset();
+      
+      // Обновляем UI на страницах создания/добавления глав
+      if (window.onAuthSuccess) {
+        window.onAuthSuccess();
+      }
     } else {
       alert(data.error || 'Ошибка входа');
     }
@@ -234,6 +244,11 @@ async function handleRegister(e) {
       document.getElementById('auth-modal').style.display = 'none';
       registerForm.reset();
       alert('Регистрация успешна! Добро пожаловать!');
+      
+      // Обновляем UI на страницах создания/добавления глав
+      if (window.onAuthSuccess) {
+        window.onAuthSuccess();
+      }
     } else {
       alert(data.error || 'Ошибка регистрации');
     }
@@ -455,6 +470,11 @@ async function handleOAuth(provider, action) {
           updateUserUI();
           document.getElementById('auth-modal').style.display = 'none';
           popup.close();
+          
+          // Обновляем UI на страницах создания/добавления глав
+          if (window.onAuthSuccess) {
+            window.onAuthSuccess();
+          }
         }
       });
     } else {

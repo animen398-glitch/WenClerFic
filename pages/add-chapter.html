@@ -34,6 +34,14 @@
               <span class="user-avatar">👤</span>
               <span class="user-name" id="user-name">Войти</span>
             </button>
+            <div class="user-dropdown" id="user-dropdown" style="display: none;">
+              <a href="/profile" class="dropdown-item">Мой профиль</a>
+              <a href="/my-fics" class="dropdown-item">Мои фанфики</a>
+              <a href="/bookmarks" class="dropdown-item">Закладки</a>
+              <a href="/settings" class="dropdown-item">Настройки</a>
+              <hr class="dropdown-divider">
+              <a href="#" class="dropdown-item" id="logout-btn">Выйти</a>
+            </div>
           </div>
         </div>
       </div>
@@ -133,6 +141,119 @@
     </div>
   </footer>
 
+  <!-- Auth Modal -->
+  <div class="modal" id="auth-modal" style="display: none;">
+    <div class="modal-content auth-modal-wrapper">
+      <span class="modal-close" id="modal-close">&times;</span>
+      <div class="auth-tab-container">
+        <ul class="auth-nav-tabs" role="tablist">
+          <li role="presentation" class="auth-nav-tab active">
+            <a href="#login-section" aria-controls="login" role="tab" data-tab="login" class="auth-nav-link">Вход</a>
+          </li>
+          <li role="presentation" class="auth-nav-tab">
+            <a href="#register-section" aria-controls="register" role="tab" data-tab="register" class="auth-nav-link">Регистрация</a>
+          </li>
+        </ul>
+        
+        <div class="auth-tab-content">
+          <!-- Login Form -->
+          <div role="tabpanel" class="auth-tab-pane active" id="login-section">
+            <form id="login-form" class="auth-form-horizontal">
+              <div class="form-group">
+                <label for="login-email">Email</label>
+                <input type="email" class="form-control" id="login-email" placeholder="Введите email" required>
+              </div>
+              <div class="form-group">
+                <label for="login-password">Пароль</label>
+                <input type="password" class="form-control" id="login-password" placeholder="Введите пароль" required>
+              </div>
+              <div class="form-group">
+                <div class="main-checkbox">
+                  <input value="remember" id="remember-me" name="remember" type="checkbox">
+                  <label for="remember-me"></label>
+                </div>
+                <span class="checkbox-text">Запомнить меня</span>
+              </div>
+              <div class="form-group">
+                <button type="submit" class="btn btn-auth-submit">Войти</button>
+              </div>
+              
+              <div class="auth-divider">
+                <span>или</span>
+              </div>
+              
+              <div class="oauth-buttons">
+                <button type="button" class="oauth-btn oauth-google" id="google-login">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+                    <path d="M9 18c2.43 0 4.467-.806 5.96-2.184l-2.908-2.258c-.806.54-1.837.86-3.052.86-2.347 0-4.33-1.585-5.04-3.715H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+                    <path d="M3.96 10.703c-.18-.54-.282-1.117-.282-1.703s.102-1.163.282-1.703V4.965H.957C.348 6.175 0 7.55 0 9s.348 2.825.957 4.035l3.003-2.332z" fill="#FBBC05"/>
+                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.965L3.96 7.297C4.67 5.167 6.653 3.58 9 3.58z" fill="#EA4335"/>
+                  </svg>
+                  Войти через Google
+                </button>
+                <button type="button" class="oauth-btn oauth-facebook" id="facebook-login">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M18 9c0-4.97-4.03-9-9-9S0 4.03 0 9c0 4.42 3.21 8.08 7.41 8.84v-6.26H5.31V9h2.1V7.02c0-2.07 1.23-3.22 3.13-3.22.91 0 1.86.16 1.86.16v2.05h-1.05c-1.03 0-1.35.64-1.35 1.3V9h2.31l-.37 2.58h-1.94v6.26C14.79 17.08 18 13.42 18 9z" fill="#1877F2"/>
+                  </svg>
+                  Войти через Facebook
+                </button>
+              </div>
+            </form>
+          </div>
+          
+          <!-- Register Form -->
+          <div role="tabpanel" class="auth-tab-pane" id="register-section">
+            <form id="register-form" class="auth-form-horizontal">
+              <div class="form-group">
+                <label for="register-username">Имя пользователя</label>
+                <input type="text" class="form-control" id="register-username" placeholder="Введите имя пользователя" required>
+              </div>
+              <div class="form-group">
+                <label for="register-email">Email</label>
+                <input type="email" class="form-control" id="register-email" placeholder="Введите email" required>
+              </div>
+              <div class="form-group">
+                <label for="register-password">Пароль</label>
+                <input type="password" class="form-control" id="register-password" placeholder="Введите пароль" required>
+              </div>
+              <div class="form-group">
+                <label for="register-password-confirm">Подтвердите пароль</label>
+                <input type="password" class="form-control" id="register-password-confirm" placeholder="Подтвердите пароль" required>
+              </div>
+              <div class="form-group">
+                <button type="submit" class="btn btn-auth-submit">Зарегистрироваться</button>
+              </div>
+              
+              <div class="auth-divider">
+                <span>или</span>
+              </div>
+              
+              <div class="oauth-buttons">
+                <button type="button" class="oauth-btn oauth-google" id="google-register">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+                    <path d="M9 18c2.43 0 4.467-.806 5.96-2.184l-2.908-2.258c-.806.54-1.837.86-3.052.86-2.347 0-4.33-1.585-5.04-3.715H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+                    <path d="M3.96 10.703c-.18-.54-.282-1.117-.282-1.703s.102-1.163.282-1.703V4.965H.957C.348 6.175 0 7.55 0 9s.348 2.825.957 4.035l3.003-2.332z" fill="#FBBC05"/>
+                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.965L3.96 7.297C4.67 5.167 6.653 3.58 9 3.58z" fill="#EA4335"/>
+                  </svg>
+                  Регистрация через Google
+                </button>
+                <button type="button" class="oauth-btn oauth-facebook" id="facebook-register">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M18 9c0-4.97-4.03-9-9-9S0 4.03 0 9c0 4.42 3.21 8.08 7.41 8.84v-6.26H5.31V9h2.1V7.02c0-2.07 1.23-3.22 3.13-3.22.91 0 1.86.16 1.86.16v2.05h-1.05c-1.03 0-1.35.64-1.35 1.3V9h2.31l-.37 2.58h-1.94v6.26C14.79 17.08 18 13.42 18 9z" fill="#1877F2"/>
+                  </svg>
+                  Регистрация через Facebook
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/app.js"></script>
   <script type="module" src="../js/add-chapter.js"></script>
 </body>
 </html>
