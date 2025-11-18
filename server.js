@@ -651,17 +651,55 @@ app.use('/styles', express.static(path.join(__dirname, 'styles')));
 app.use('/js', express.static(path.join(__dirname, 'js')));
 app.use('/pages', express.static(path.join(__dirname, 'pages')));
 
-// Serve index.html for root and other routes
+// Serve index.html for root
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Specific page routes (must be before catch-all)
 app.get('/fic/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'fic.html'));
 });
 
 app.get('/create', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'create.html'));
+});
+
+app.get('/profile', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'profile.html'));
+});
+
+app.get('/author/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'profile.html'));
+});
+
+app.get('/my-fics', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'my-fics.html'));
+});
+
+app.get('/fic/:id/addpart', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'add-chapter.html'));
+});
+
+app.get('/fic/:id/chapter/:chapterId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'chapter.html'));
+});
+
+// Additional routes for navigation (SPA fallback)
+app.get('/fics', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html')); // Каталог
+});
+
+app.get('/authors', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html')); // Авторы
+});
+
+app.get('/settings', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html')); // Настройки
+});
+
+app.get('/bookmarks', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html')); // Закладки
 });
 
 // User Routes
@@ -716,27 +754,7 @@ app.get('/api/users/:id/fics', async (req, res) => {
   }
 });
 
-app.get('/profile', (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'profile.html'));
-});
-
-app.get('/author/:id', (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'profile.html'));
-});
-
-app.get('/my-fics', (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'my-fics.html'));
-});
-
-app.get('/fic/:id/addpart', (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'add-chapter.html'));
-});
-
-app.get('/fic/:id/chapter/:chapterId', (req, res) => {
-  res.sendFile(path.join(__dirname, 'pages', 'chapter.html'));
-});
-
-// Fallback for other routes
+// Fallback for other routes - возвращаем index.html для SPA роутинга
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
