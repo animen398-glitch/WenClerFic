@@ -31,7 +31,23 @@ app.use(express.static(path.join(__dirname)));
 
 // Initialize database
 async function initData() {
-  await db.initDatabase();
+  try {
+    await db.initDatabase();
+  } catch (error) {
+    console.error('Database initialization error:', error);
+    // Don't throw - allow app to start even if DB init fails
+    // It will retry on first request
+  }
+}
+
+// Initialize database (non-blocking for Vercel)
+// On Vercel, we initialize on first request, not on module load
+if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
+  initData().then(() => {
+    console.log('Database initialized');
+  }).catch(err => {
+    console.error('Database initialization error:', err);
+  });
 }
 
 // Auth Routes
@@ -725,25 +741,36 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Initialize database
-initData().then(() => {
-  console.log('Database initialized');
-  
-  // Only start listening if not on Vercel (serverless)
-  if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
+// Start server (only for local development, not on Vercel)
+if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
+  initData().then(() => {
+    console.log('Database initialized');
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
-  }
-}).catch(err => {
-  console.error('Database initialization error:', err);
-  // On Vercel, still export app even if DB init fails (it will retry on first request)
-  if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
+  }).catch(err => {
+    console.error('Database initialization error:', err);
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT} (DB init failed)`);
     });
-  }
-});
+  });
+} else {
+  // On Vercel, initialize DB on first request (lazy initialization)
+  let dbInitialized = false;
+  app.use(async (req, res, next) => {
+    if (!dbInitialized) {
+      try {
+        await db.initDatabase();
+        dbInitialized = true;
+        console.log('Database initialized on first request');
+      } catch (error) {
+        console.error('Database initialization error:', error);
+        // Continue anyway - some routes might not need DB
+      }
+    }
+    next();
+  });
+}
 
 // Export app for Vercel serverless
 module.exports = app;

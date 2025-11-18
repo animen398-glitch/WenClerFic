@@ -2,12 +2,16 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-const DB_PATH = path.join(__dirname, 'data', 'wenclerfic.db');
+// На Vercel используем /tmp для записи, иначе локальную папку data
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV;
+const DB_DIR = isVercel ? '/tmp' : path.join(__dirname, 'data');
+const DB_PATH = path.join(DB_DIR, 'wenclerfic.db');
 
-// Создаем папку data если её нет
-const dataDir = path.join(__dirname, 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+// Создаем папку для БД если её нет (только для локальной разработки)
+if (!isVercel) {
+  if (!fs.existsSync(DB_DIR)) {
+    fs.mkdirSync(DB_DIR, { recursive: true });
+  }
 }
 
 // Создаем и подключаемся к БД
