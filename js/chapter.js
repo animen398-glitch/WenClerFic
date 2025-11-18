@@ -12,8 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
   getIdsFromUrl();
   if (ficId && chapterId) {
-    loadFic();
-    loadChapter();
+    // Сначала загружаем информацию о фанфике, потом главу
+    loadFic().then(() => {
+      loadChapter();
+    });
   }
 });
 
@@ -34,17 +36,19 @@ async function loadFic() {
     const data = await response.json();
     if (response.ok) {
       currentFic = data;
+      return data;
     }
   } catch (error) {
     console.error('Error loading fic:', error);
   }
+  return null;
 }
 
 function getIdsFromUrl() {
   const path = window.location.pathname;
   const match = path.match(/\/fic\/(\d+)\/chapter\/(\d+)/);
   if (match) {
-    ficId = match[1];
+    ficId = parseInt(match[1]);
     chapterId = parseInt(match[2]);
   }
 }
