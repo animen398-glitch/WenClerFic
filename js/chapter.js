@@ -5,11 +5,14 @@ let ficId = null;
 let chapterId = null;
 let currentChapter = null;
 let allChapters = [];
+let currentUser = null;
+let currentFic = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
   getIdsFromUrl();
   if (ficId && chapterId) {
+    loadFic();
     loadChapter();
   }
 });
@@ -17,11 +20,23 @@ document.addEventListener('DOMContentLoaded', () => {
 function checkAuth() {
   const user = localStorage.getItem('user');
   if (user) {
-    const currentUser = JSON.parse(user);
+    currentUser = JSON.parse(user);
     const userNameEl = document.getElementById('user-name');
     if (userNameEl) {
       userNameEl.textContent = currentUser.username;
     }
+  }
+}
+
+async function loadFic() {
+  try {
+    const response = await fetch(`${API_BASE}/fics/${ficId}`);
+    const data = await response.json();
+    if (response.ok) {
+      currentFic = data;
+    }
+  } catch (error) {
+    console.error('Error loading fic:', error);
   }
 }
 
@@ -71,6 +86,30 @@ function renderChapter(chapter) {
   backLinks.forEach(link => {
     link.href = `/fic/${ficId}`;
   });
+  
+  // Добавляем кнопку редактирования для автора
+  const isAuthor = currentUser && currentFic && currentFic.authorId === currentUser.id;
+  if (isAuthor) {
+    addEditButton();
+  }
+}
+
+function addEditButton() {
+  const chapterHeader = document.querySelector('.fic-header');
+  if (!chapterHeader || document.getElementById('edit-chapter-btn')) return;
+  
+  const editBtn = document.createElement('a');
+  editBtn.id = 'edit-chapter-btn';
+  editBtn.href = `/fic/${ficId}/chapter/${chapterId}/edit`;
+  editBtn.className = 'btn btn-primary';
+  editBtn.style.marginTop = '1rem';
+  editBtn.textContent = '✏️ Редактировать главу';
+  
+  const metaHeader = document.querySelector('.fic-meta-header');
+  if (metaHeader) {
+    metaHeader.appendChild(document.createElement('br'));
+    metaHeader.appendChild(editBtn);
+  }
 }
 
 function setupNavigation() {
