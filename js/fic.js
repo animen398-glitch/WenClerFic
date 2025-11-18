@@ -203,7 +203,12 @@ function renderChapters(chapters) {
         <button class="chapter-btn" onclick="event.stopPropagation(); window.location.href='/fic/${ficId}/chapter/${chapter.id}'">
           Читать
         </button>
-        ${isAuthor ? `<button class="chapter-btn btn-danger" onclick="event.stopPropagation(); deleteChapter(${chapter.id})" title="Удалить главу">🗑️</button>` : ''}
+        ${isAuthor ? `
+          <button class="chapter-btn" onclick="event.stopPropagation(); window.location.href='/fic/${ficId}/chapter/${chapter.id}/edit'" title="Редактировать главу" style="background: var(--accent);">
+            ✏️
+          </button>
+          <button class="chapter-btn btn-danger" onclick="event.stopPropagation(); deleteChapter(${chapter.id})" title="Удалить главу">🗑️</button>
+        ` : ''}
       </div>
     </div>
   `).join('');

@@ -3,13 +3,19 @@ const API_BASE = window.location.origin + '/api';
 
 let currentUser = null;
 let ficId = null;
+let chapterId = null;
 let currentFic = null;
+let isEditMode = false;
+let currentChapter = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
-  getFicId();
+  getIdsFromUrl();
   if (ficId) {
     loadFic();
+    if (isEditMode && chapterId) {
+      loadChapter();
+    }
     setupEventListeners();
   }
 });
@@ -32,10 +38,24 @@ function updateUserUI() {
   }
 }
 
-function getFicId() {
+function getIdsFromUrl() {
   const path = window.location.pathname;
-  const match = path.match(/\/fic\/(\d+)\/addpart/);
-  ficId = match ? match[1] : null;
+  
+  // Проверяем режим редактирования: /fic/:id/chapter/:chapterId/edit
+  const editMatch = path.match(/\/fic\/(\d+)\/chapter\/(\d+)\/edit/);
+  if (editMatch) {
+    ficId = editMatch[1];
+    chapterId = editMatch[2];
+    isEditMode = true;
+    return;
+  }
+  
+  // Режим добавления: /fic/:id/addpart
+  const addMatch = path.match(/\/fic\/(\d+)\/addpart/);
+  if (addMatch) {
+    ficId = addMatch[1];
+    isEditMode = false;
+  }
 }
 
 async function loadFic() {
@@ -61,6 +81,16 @@ async function loadFic() {
       const backBtn = document.getElementById('back-to-fic');
       backBtn.href = `/fic/${ficId}`;
       backBtn.style.display = 'block';
+      
+      // Обновляем заголовок страницы в зависимости от режима
+      const pageTitle = document.querySelector('.page-title');
+      if (isEditMode) {
+        pageTitle.textContent = 'Редактировать главу';
+        document.title = 'Редактировать главу - WenClerFic';
+      } else {
+        pageTitle.textContent = 'Добавить главу';
+        document.title = 'Добавить главу - WenClerFic';
+      }
     } else {
       showError(data.error || 'Ошибка загрузки фанфика');
     }
@@ -121,8 +151,16 @@ function setupEventListeners() {
     });
   });
 
-  // Load draft on page load
-  loadDraft();
+  // Load draft on page load (только если не режим редактирования)
+  if (!isEditMode) {
+    loadDraft();
+  }
+  
+  // Обновляем текст кнопки в зависимости от режима
+  const submitBtn = document.getElementById('submit-btn');
+  if (isEditMode) {
+    submitBtn.textContent = 'Сохранить изменения';
+  }
 }
 
 function saveDraft() {
@@ -156,6 +194,39 @@ function loadDraft() {
   }
 }
 
+async function loadChapter() {
+  if (!chapterId || !ficId) return;
+  
+  try {
+    const response = await fetch(`${API_BASE}/fics/${ficId}/chapters/${chapterId}`);
+    const data = await response.json();
+
+    if (response.ok) {
+      currentChapter = data;
+      
+      // Проверяем, что пользователь - автор
+      if (currentUser && currentFic && currentFic.authorId !== currentUser.id) {
+        alert('Вы можете редактировать только свои главы');
+        window.location.href = `/fic/${ficId}`;
+        return;
+      }
+      
+      // Заполняем форму данными главы
+      document.getElementById('chapter-title').value = data.title || '';
+      document.getElementById('chapter-content').value = data.content || '';
+      
+      // Обновляем счетчики
+      document.getElementById('chapter-content').dispatchEvent(new Event('input'));
+      document.getElementById('chapter-title').dispatchEvent(new Event('input'));
+    } else {
+      showError(data.error || 'Ошибка загрузки главы');
+    }
+  } catch (error) {
+    console.error('Error loading chapter:', error);
+    showError('Ошибка подключения к серверу');
+  }
+}
+
 async function handleSubmit(e) {
   e.preventDefault();
 
@@ -172,36 +243,51 @@ async function handleSubmit(e) {
 
   const submitBtn = document.getElementById('submit-btn');
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Добавление...';
+  submitBtn.textContent = isEditMode ? 'Сохранение...' : 'Добавление...';
 
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_BASE}/fics/${ficId}/chapters`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(chapterData)
-    });
+    
+    let response;
+    if (isEditMode && chapterId) {
+      // Редактирование существующей главы
+      response = await fetch(`${API_BASE}/fics/${ficId}/chapters/${chapterId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(chapterData)
+      });
+    } else {
+      // Добавление новой главы
+      response = await fetch(`${API_BASE}/fics/${ficId}/chapters`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(chapterData)
+      });
+    }
 
     const data = await response.json();
 
     if (response.ok) {
       // Clear draft
       localStorage.removeItem(`chapter-draft-${ficId}`);
-      alert('Глава успешно добавлена!');
+      alert(isEditMode ? 'Глава успешно обновлена!' : 'Глава успешно добавлена!');
       window.location.href = `/fic/${ficId}`;
     } else {
-      alert(data.error || 'Ошибка при добавлении главы');
+      alert(data.error || (isEditMode ? 'Ошибка при обновлении главы' : 'Ошибка при добавлении главы'));
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Опубликовать главу';
+      submitBtn.textContent = isEditMode ? 'Сохранить изменения' : 'Опубликовать главу';
     }
   } catch (error) {
-    console.error('Error adding chapter:', error);
+    console.error('Error saving chapter:', error);
     alert('Ошибка подключения к серверу');
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Опубликовать главу';
+    submitBtn.textContent = isEditMode ? 'Сохранить изменения' : 'Опубликовать главу';
   }
 }
 

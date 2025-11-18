@@ -685,6 +685,10 @@ app.get('/fic/:id/chapter/:chapterId', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'chapter.html'));
 });
 
+app.get('/fic/:id/chapter/:chapterId/edit', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'add-chapter.html'));
+});
+
 // Additional routes for navigation (SPA fallback)
 app.get('/fics', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html')); // Каталог
