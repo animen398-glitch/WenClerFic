@@ -1,4 +1,5 @@
-const API_BASE = 'http://localhost:3000/api';
+// API Configuration - автоматически определяет базовый URL
+const API_BASE = window.location.origin + '/api';
 
 let currentUser = null;
 let ficId = null;
@@ -200,7 +201,7 @@ async function handleSubmit(e) {
     console.error('Error adding chapter:', error);
     alert('Ошибка подключения к серверу');
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Добавить главу';
+    submitBtn.textContent = 'Опубликовать главу';
   }
 }
 

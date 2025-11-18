@@ -1,4 +1,5 @@
-const API_BASE = 'http://localhost:3000/api';
+// API Configuration - автоматически определяет базовый URL
+const API_BASE = window.location.origin + '/api';
 
 let ficId = null;
 let chapterId = null;

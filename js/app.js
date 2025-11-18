@@ -1,5 +1,5 @@
-// API Configuration
-const API_BASE = 'http://localhost:3000/api';
+// API Configuration - автоматически определяет базовый URL
+const API_BASE = window.location.origin + '/api';
 
 // State
 const state = {
