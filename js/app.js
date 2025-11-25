@@ -543,11 +543,23 @@ async function handleOAuth(provider, action) {
       }
 
       oauthCheckInterval = setInterval(() => {
-        if (!oauthPopup || oauthPopup.closed) {
-          clearInterval(oauthCheckInterval);
-          oauthCheckInterval = null;
-          oauthPopup = null;
-          checkAuth();
+        try {
+          if (!oauthPopup) {
+            clearInterval(oauthCheckInterval);
+            oauthCheckInterval = null;
+            checkAuth();
+            return;
+          }
+          // Безопасная проверка закрытия окна
+          if (oauthPopup.closed) {
+            clearInterval(oauthCheckInterval);
+            oauthCheckInterval = null;
+            oauthPopup = null;
+            checkAuth();
+          }
+        } catch (e) {
+          // Игнорируем ошибки Cross-Origin-Opener-Policy
+          // Полагаемся на postMessage для определения закрытия окна
         }
       }, 1000);
     } else {
@@ -599,8 +611,18 @@ function handleOAuthMessage(event) {
 }
 
 function closeOAuthPopup() {
-  if (oauthPopup && !oauthPopup.closed) {
-    oauthPopup.close();
+  try {
+    if (oauthPopup) {
+      try {
+        if (!oauthPopup.closed) {
+          oauthPopup.close();
+        }
+      } catch (e) {
+        // Игнорируем ошибки Cross-Origin-Opener-Policy при проверке closed
+      }
+    }
+  } catch (e) {
+    // Игнорируем ошибки при закрытии
   }
   oauthPopup = null;
   if (oauthCheckInterval) {

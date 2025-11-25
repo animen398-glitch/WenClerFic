@@ -348,6 +348,10 @@ app.get('/api/auth/facebook', (req, res) => {
 });
 
 app.get('/api/auth/google/callback', async (req, res) => {
+  // Устанавливаем заголовки для работы с popup окном
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  
   try {
     const { code, state } = req.query;
     
@@ -512,6 +516,10 @@ app.post('/api/auth/complete-profile', async (req, res) => {
 });
 
 app.get('/api/auth/facebook/callback', async (req, res) => {
+  // Устанавливаем заголовки для работы с popup окном
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  
   try {
     const { code, state } = req.query;
     
