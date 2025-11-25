@@ -227,6 +227,110 @@ function setupEventListeners() {
   }
   
   setupAuthRequiredTriggers();
+  setupMenuHandlers();
+}
+
+function setupMenuHandlers() {
+  // Обработчики для кнопок "Кабинет"
+  document.querySelectorAll('.avatar-menu__item[data-role]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const role = btn.dataset.role;
+      if (role === 'author') {
+        window.location.href = '/my-fics';
+      } else if (role === 'reader') {
+        window.location.href = '/bookmarks';
+      } else if (role === 'helper') {
+        alert('Кабинет помощника - в разработке');
+        // window.location.href = '/helper/cabinet';
+      }
+    });
+  });
+
+  // Обработчики для остальных кнопок меню
+  document.querySelectorAll('.avatar-menu__item').forEach(btn => {
+    const text = btn.textContent.trim();
+    const href = btn.getAttribute('href');
+    
+    // Пропускаем кнопки, которые уже имеют href (ссылки)
+    if (href) return;
+    
+    // Пропускаем кнопки с data-role (уже обработаны выше)
+    if (btn.dataset.role) return;
+    
+    // Пропускаем кнопку "Выйти" (уже обработана)
+    if (btn.id === 'logout-btn') return;
+    
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleMenuClick(text, btn);
+    });
+  });
+}
+
+function handleMenuClick(menuText, button) {
+  switch(menuText) {
+    case 'Улучшить аккаунт':
+      showPremiumModal();
+      break;
+    case 'Мои новости':
+      window.location.href = '/news';
+      break;
+    case 'Мой профиль':
+      window.location.href = '/profile';
+      break;
+    case 'Личные сообщения':
+      window.location.href = '/messages';
+      break;
+    case 'Добавить фанфик':
+      if (!state.currentUser) {
+        showAuthModal('register');
+      } else {
+        window.location.href = '/create';
+      }
+      break;
+    case 'Мои фанфики':
+      window.location.href = '/my-fics';
+      break;
+    case 'Мой блог':
+      window.location.href = '/blog';
+      break;
+    case 'Отзывы':
+      window.location.href = '/reviews';
+      break;
+    case 'История изменений':
+      window.location.href = '/history';
+      break;
+    case 'Сообщения об ошибках':
+      window.location.href = '/error-reports';
+      break;
+    case 'Персональный баннер':
+      window.location.href = '/profile/banner';
+      break;
+    case 'Купить монеты':
+      showCoinsModal();
+      break;
+    case 'Заявки':
+      window.location.href = '/requests';
+      break;
+    case 'Связь':
+      window.location.href = '/contact';
+      break;
+    case 'Настройки':
+      window.location.href = '/profile/settings';
+      break;
+    default:
+      console.log('Неизвестная кнопка меню:', menuText);
+      alert(`${menuText} - функция в разработке`);
+  }
+}
+
+function showPremiumModal() {
+  alert('Премиум-аккаунт дает:\n- Приоритетная поддержка\n- Расширенные возможности\n- Без рекламы\n\nСкоро будет доступно!');
+}
+
+function showCoinsModal() {
+  alert('Система монет скоро будет доступна!');
 }
 
 function showAuthModal(defaultTab = 'login') {

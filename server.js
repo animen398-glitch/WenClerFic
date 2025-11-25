@@ -315,6 +315,15 @@ app.post('/api/auth/logout', async (req, res) => {
 // OAuth Routes
 app.get('/api/auth/google', (req, res) => {
   const action = req.query.action || 'login';
+  
+  // Проверка наличия ключей
+  if (!OAUTH_CONFIG.google.clientId || !OAUTH_CONFIG.google.clientSecret) {
+    return res.status(400).json({ 
+      error: 'Google OAuth не настроен',
+      message: 'Добавьте GOOGLE_CLIENT_ID и GOOGLE_CLIENT_SECRET в файл .env'
+    });
+  }
+  
   // В продакшене использовать реальный OAuth URL
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
     `client_id=${OAUTH_CONFIG.google.clientId}&` +
@@ -736,6 +745,17 @@ app.get('/api/fics/:id', async (req, res) => {
     const author = await db.getUserById(fic.authorId);
     await db.incrementFicViews(fic.id);
 
+    // Логируем просмотр фанфика
+    const user = await getUserFromToken(extractToken(req));
+    if (user) {
+      try {
+        await db.logUserAction(user.id, 'view', 'fic', fic.id);
+      } catch (err) {
+        console.error('Ошибка логирования просмотра:', err);
+        // Не прерываем выполнение, если логирование не удалось
+      }
+    }
+
     res.json({
       ...fic,
       views: (fic.views || 0) + 1,
@@ -802,6 +822,14 @@ app.post('/api/fics', async (req, res) => {
       authorId: user.id,
       status: status || 'ongoing'
     });
+
+    // Логируем создание фанфика
+    try {
+      await db.logUserAction(user.id, 'create_fic', 'fic', newFic.id);
+    } catch (err) {
+      console.error('Ошибка логирования создания фанфика:', err);
+      // Не прерываем выполнение, если логирование не удалось
+    }
 
     res.status(201).json(newFic);
   } catch (error) {
@@ -956,6 +984,14 @@ app.post('/api/fics/:ficId/chapters', async (req, res) => {
       order: maxOrder + 1
     });
 
+    // Логируем создание главы
+    try {
+      await db.logUserAction(user.id, 'create_chapter', 'chapter', newChapter.id, { ficId });
+    } catch (err) {
+      console.error('Ошибка логирования создания главы:', err);
+      // Не прерываем выполнение, если логирование не удалось
+    }
+
     res.status(201).json(newChapter);
   } catch (error) {
     console.error('Error creating chapter:', error);
@@ -1069,6 +1105,14 @@ app.post('/api/fics/:ficId/comments', async (req, res) => {
       authorId: user.id,
       text: text.trim()
     });
+
+    // Логируем создание комментария
+    try {
+      await db.logUserAction(user.id, 'comment', 'comment', newComment.id, { ficId: parseInt(req.params.ficId) });
+    } catch (err) {
+      console.error('Ошибка логирования комментария:', err);
+      // Не прерываем выполнение, если логирование не удалось
+    }
 
     res.status(201).json(newComment);
   } catch (error) {
@@ -1223,6 +1267,44 @@ app.get('/api/users/:id/fics', async (req, res) => {
     res.json(ficsWithAuthors);
   } catch (error) {
     console.error('Error loading user fics:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// User Actions API
+app.get('/api/user/actions', async (req, res) => {
+  try {
+    const token = extractToken(req);
+    const user = await getUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ error: 'Не авторизован' });
+    }
+    
+    const actionType = req.query.type;
+    const limit = parseInt(req.query.limit) || 50;
+    
+    let actions;
+    if (actionType) {
+      actions = await db.getUserActionsByType(user.id, actionType, limit);
+    } else {
+      actions = await db.getUserActions(user.id, limit);
+    }
+    
+    // Парсим metadata если есть
+    const actionsWithParsedMetadata = actions.map(action => {
+      if (action.metadata) {
+        try {
+          action.metadata = JSON.parse(action.metadata);
+        } catch (e) {
+          // Если не удалось распарсить, оставляем как есть
+        }
+      }
+      return action;
+    });
+    
+    res.json({ actions: actionsWithParsedMetadata });
+  } catch (error) {
+    console.error('Error getting user actions:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });

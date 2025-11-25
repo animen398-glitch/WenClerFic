@@ -147,14 +147,31 @@ function initDatabase() {
                   console.error('Ошибка создания таблицы pending_profiles:', pendingErr);
                   reject(pendingErr);
                 } else {
-                  cleanupExpiredSessions().catch(err => {
-                    console.error('Ошибка очистки просроченных сессий:', err);
+                  // Таблица действий пользователей
+                  db.run(`CREATE TABLE IF NOT EXISTS user_actions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    userId INTEGER NOT NULL,
+                    actionType TEXT NOT NULL,
+                    targetType TEXT,
+                    targetId INTEGER,
+                    metadata TEXT,
+                    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+                  )`, (actionsErr) => {
+                    if (actionsErr) {
+                      console.error('Ошибка создания таблицы user_actions:', actionsErr);
+                      reject(actionsErr);
+                    } else {
+                      cleanupExpiredSessions().catch(err => {
+                        console.error('Ошибка очистки просроченных сессий:', err);
+                      });
+                      cleanupExpiredPendingProfiles().catch(err => {
+                        console.error('Ошибка очистки незавершенных профилей:', err);
+                      });
+                      console.log('База данных инициализирована');
+                      resolve();
+                    }
                   });
-                  cleanupExpiredPendingProfiles().catch(err => {
-                    console.error('Ошибка очистки незавершенных профилей:', err);
-                  });
-                  console.log('База данных инициализирована');
-                  resolve();
                 }
               });
             }
@@ -658,6 +675,51 @@ function incrementFicViews(id) {
   });
 }
 
+// User Actions
+function logUserAction(userId, actionType, targetType = null, targetId = null, metadata = null) {
+  return new Promise((resolve, reject) => {
+    const metaStr = metadata ? JSON.stringify(metadata) : null;
+    db.run(
+      `INSERT INTO user_actions (userId, actionType, targetType, targetId, metadata) VALUES (?, ?, ?, ?, ?)`,
+      [userId, actionType, targetType, targetId, metaStr],
+      function(err) {
+        if (err) {
+          console.error('Ошибка логирования действия:', err);
+          reject(err);
+        } else {
+          resolve({ id: this.lastID });
+        }
+      }
+    );
+  });
+}
+
+function getUserActions(userId, limit = 50) {
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT * FROM user_actions WHERE userId = ? ORDER BY createdAt DESC LIMIT ?`,
+      [userId, limit],
+      (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      }
+    );
+  });
+}
+
+function getUserActionsByType(userId, actionType, limit = 50) {
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT * FROM user_actions WHERE userId = ? AND actionType = ? ORDER BY createdAt DESC LIMIT ?`,
+      [userId, actionType, limit],
+      (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      }
+    );
+  });
+}
+
 module.exports = {
   db,
   initDatabase,
@@ -695,6 +757,10 @@ module.exports = {
   getPendingProfileByToken,
   deletePendingProfileByToken,
   deletePendingProfilesByUser,
-  cleanupExpiredPendingProfiles
+  cleanupExpiredPendingProfiles,
+  // User Actions
+  logUserAction,
+  getUserActions,
+  getUserActionsByType
 };
 
