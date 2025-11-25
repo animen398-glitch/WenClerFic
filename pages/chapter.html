@@ -28,60 +28,172 @@
     }
   </style>
 </head>
-<body>
-  <header class="header">
-    <div class="container">
-      <div class="header-content">
-        <div class="logo">
-          <a href="/">
-            <span class="logo-icon">📚</span>
-            <span class="logo-text">WenClerFic</span>
-          </a>
-        </div>
-        
-        <nav class="main-nav">
-          <a href="/" class="nav-link">Главная</a>
-          <a href="/fics" class="nav-link">Каталог</a>
-          <a href="/authors" class="nav-link">Авторы</a>
-          <a href="/create" class="nav-link">Создать</a>
-        </nav>
+<body class="has-fixed-header">
+  <!-- Header: глобальная панель Ficbook-style -->
+  <header class="global-header" data-component="header">
+    <div class="global-header__bar">
+      <a href="/" class="global-header__logo">
+        <span class="global-header__logo-mark">📚</span>
+        <span class="global-header__logo-text">WenClerFic</span>
+      </a>
 
-        <div class="header-actions">
-          <div class="user-menu" id="user-menu">
-            <button class="user-btn" id="user-btn">
-              <span class="user-avatar">👤</span>
-              <span class="user-name" id="user-name">Войти</span>
-            </button>
+      <nav class="global-header__nav" aria-label="Основная навигация">
+        <a class="global-header__link" href="/fics">Фанфики</a>
+        <a class="global-header__link" href="/authors">Авторы</a>
+        <a class="global-header__link" href="/popular">Популярное</a>
+        <a class="global-header__link" href="/requests">Заявки</a>
+        <a class="global-header__link" href="/helpers">Помощники</a>
+        <a class="global-header__link" href="/contests">Конкурсы</a>
+        <a class="global-header__link" href="/random">Случайная работа</a>
+      </nav>
+
+      <div class="global-header__controls">
+        <form class="global-header__search" role="search">
+          <input class="global-header__search-input" type="search" placeholder="Поиск по Ficbook" aria-label="Поиск по фанфикам">
+          <button class="global-header__search-btn" type="submit">🔍</button>
+        </form>
+
+        <a class="promo-banner" href="/upgrade">
+          <span class="promo-banner__label">Promo</span>
+          <span class="promo-banner__text">+30% к монетам до 1 декабря</span>
+        </a>
+
+        <button class="notification-bell" id="notification-bell" aria-label="Уведомления" data-notification-toggle>
+          <span class="notification-bell__icon">🔔</span>
+          <span class="notification-bell__count" id="notification-count">3</span>
+        </button>
+
+        <div class="avatar-menu" id="avatar-menu">
+          <button class="avatar-menu__trigger" id="avatar-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="avatar-menu__avatar">👤</span>
+            <span class="avatar-menu__name" id="user-name">Войти</span>
+          </button>
+          <!-- Меню аватара пользователя -->
+          <div class="avatar-menu__dropdown" id="avatar-dropdown" role="menu" aria-hidden="true">
+            <div class="avatar-menu__group">
+              <button class="avatar-menu__item">Улучшить аккаунт</button>
+              <button class="avatar-menu__item">Мои новости</button>
+              <button class="avatar-menu__item">Мой профиль</button>
+              <button class="avatar-menu__item">Личные сообщения</button>
+              <div class="avatar-menu__submenu">
+                <span class="avatar-menu__item avatar-menu__item--label">Кабинет</span>
+                <button class="avatar-menu__item" data-role="author">автора</button>
+                <button class="avatar-menu__item" data-role="reader">читателя</button>
+                <button class="avatar-menu__item" data-role="helper">помощника</button>
+              </div>
+            </div>
+            <div class="avatar-menu__group">
+              <button class="avatar-menu__item">Добавить фанфик</button>
+              <button class="avatar-menu__item">Мои фанфики</button>
+              <button class="avatar-menu__item">Мой блог</button>
+              <button class="avatar-menu__item">Отзывы</button>
+              <button class="avatar-menu__item">История изменений</button>
+              <button class="avatar-menu__item">Сообщения об ошибках</button>
+              <button class="avatar-menu__item">Персональный баннер</button>
+            </div>
+            <div class="avatar-menu__group">
+              <button class="avatar-menu__item">Купить монеты</button>
+              <button class="avatar-menu__item">Заявки</button>
+              <button class="avatar-menu__item">Связь</button>
+              <button class="avatar-menu__item">Настройки</button>
+              <button class="avatar-menu__item avatar-menu__item--danger">Выйти</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </header>
 
-  <main class="main-content">
-    <div class="container">
-      <div style="margin: 2rem 0;">
-        <a href="#" id="back-to-fic" style="color: var(--primary-color); text-decoration: none;">← Вернуться к фанфику</a>
-      </div>
+  <!-- Notifications panel -->
+  <aside class="notifications-panel" id="notifications-panel" aria-hidden="true">
+    <div class="notifications-panel__header">
+      <h3>Уведомления</h3>
+      <button class="notifications-panel__mark" id="mark-all-read">Пометить всё как прочитанное</button>
+    </div>
+    <div class="notifications-panel__list" id="notifications-list"></div>
+    <div class="notifications-panel__footer">
+      <a href="/notifications" class="notifications-panel__link">Все уведомления →</a>
+    </div>
+  </aside>
 
-      <div class="fic-header">
-        <h1 id="chapter-title" class="fic-title">Загрузка...</h1>
-        <div class="fic-meta-header">
-          <span id="chapter-info">—</span>
+  <main class="reader-page">
+    <div class="reader-shell">
+      <div class="reader-shell__aside">
+        <button class="reader-shell__back" id="back-to-fic">← Вернуться к списку глав</button>
+        <div class="reader-shell__dropdown">
+          <label for="chapter-select">Навигация</label>
+          <select id="chapter-select" class="reader-shell__select" aria-label="Выберите главу"></select>
         </div>
+        <nav class="reader-shell__chapters" id="chapters-nav" aria-label="Список глав"></nav>
       </div>
 
-      <div class="chapter-content" id="chapter-content">
-        Загрузка...
-      </div>
+      <article class="chapter-reader" id="reader-root">
+        <header class="chapter-reader__header">
+          <div>
+            <p class="chapter-reader__breadcrumbs" id="chapter-breadcrumbs">Раздел • Фэндом</p>
+            <h1 class="chapter-reader__title" id="chapter-title">Загрузка...</h1>
+            <p class="chapter-reader__meta" id="chapter-info">—</p>
+          </div>
+          <div class="chapter-reader__stats">
+            <div><span>👁</span><strong id="reader-views">0</strong></div>
+            <div><span>❤️</span><strong id="reader-likes">0</strong></div>
+            <div><span>⭐</span><strong id="reader-fav">0</strong></div>
+          </div>
+        </header>
 
-      <div class="chapter-navigation">
-        <button class="btn btn-outline" id="prev-chapter" style="display: none;">← Предыдущая глава</button>
-        <a href="#" id="back-to-fic-btn" class="btn btn-primary">К фанфику</a>
-        <button class="btn btn-outline" id="next-chapter" style="display: none;">Следующая глава →</button>
-      </div>
+        <div class="reader-settings" id="reader-settings">
+          <div class="reader-settings__group">
+            <span class="reader-settings__label">Шрифт</span>
+            <div class="reader-settings__options" data-setting="font">
+              <button type="button" data-value="inter" class="reader-settings__btn reader-settings__btn--active">Inter</button>
+              <button type="button" data-value="merriweather" class="reader-settings__btn">Merriweather</button>
+              <button type="button" data-value="ptserif" class="reader-settings__btn">PT Serif</button>
+            </div>
+          </div>
+          <div class="reader-settings__group">
+            <span class="reader-settings__label">Размер</span>
+            <div class="reader-settings__options" data-setting="size">
+              <button type="button" data-value="s" class="reader-settings__btn">A-</button>
+              <button type="button" data-value="m" class="reader-settings__btn reader-settings__btn--active">A</button>
+              <button type="button" data-value="l" class="reader-settings__btn">A+</button>
+            </div>
+          </div>
+          <div class="reader-settings__group">
+            <span class="reader-settings__label">Тема</span>
+            <div class="reader-settings__options" data-setting="theme">
+              <button type="button" data-value="light" class="reader-settings__btn reader-settings__btn--active">Светлая</button>
+              <button type="button" data-value="dark" class="reader-settings__btn">Тёмная</button>
+              <button type="button" data-value="sepia" class="reader-settings__btn">Сепия</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="chapter-content" id="chapter-content">
+          Загрузка...
+        </div>
+
+        <div class="reader-actions">
+          <button class="reader-actions__btn" id="reader-like-btn">❤️ Лайк</button>
+          <button class="reader-actions__btn" id="reader-dislike-btn">👎 Дизлайк</button>
+          <button class="reader-actions__btn" id="reader-fav-btn">⭐ В избранное</button>
+        </div>
+
+        <div class="chapter-navigation">
+          <button class="btn btn-outline" id="prev-chapter">← Предыдущая</button>
+          <button class="btn btn-outline" id="next-chapter">Следующая →</button>
+        </div>
+
+        <section class="reader-comments" id="reader-comments">
+          <header>
+            <h2>Комментарии</h2>
+          </header>
+          <div class="reader-comments__list" id="reader-comments-list"></div>
+        </section>
+      </article>
     </div>
   </main>
+
+  <button class="reader-floating-toggle" id="reader-floating-toggle" aria-label="Настройки чтения">Aa</button>
 
   <footer class="footer">
     <div class="container">
@@ -97,6 +209,7 @@
     </div>
   </footer>
 
+  <script src="../js/ui.js" type="module"></script>
   <script type="module" src="../js/chapter.js"></script>
 </body>
 </html>

@@ -10,98 +10,169 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-  <!-- Header (same as index) -->
-  <header class="header">
-    <div class="container">
-      <div class="header-content">
-        <div class="logo">
-          <a href="/">
-            <span class="logo-icon">📚</span>
-            <span class="logo-text">WenClerFic</span>
-          </a>
-        </div>
-        
-        <nav class="main-nav">
-          <a href="/" class="nav-link">Главная</a>
-          <a href="/fics" class="nav-link">Каталог</a>
-          <a href="/authors" class="nav-link">Авторы</a>
-          <a href="/create" class="nav-link">Создать</a>
-        </nav>
+<body class="has-fixed-header">
+  <!-- Header: глобальная панель Ficbook-style -->
+  <header class="global-header" data-component="header">
+    <div class="global-header__bar">
+      <a href="/" class="global-header__logo">
+        <span class="global-header__logo-mark">📚</span>
+        <span class="global-header__logo-text">WenClerFic</span>
+      </a>
 
-        <div class="header-actions">
-          <div class="search-box">
-            <input type="text" placeholder="Поиск фанфиков..." class="search-input">
-            <button class="search-btn">🔍</button>
-          </div>
-          
-          <div class="user-menu" id="user-menu">
-            <button class="user-btn" id="user-btn">
-              <span class="user-avatar">👤</span>
-              <span class="user-name" id="user-name">Войти</span>
-            </button>
+      <nav class="global-header__nav" aria-label="Основная навигация">
+        <a class="global-header__link" href="/fics">Фанфики</a>
+        <a class="global-header__link" href="/authors">Авторы</a>
+        <a class="global-header__link" href="/popular">Популярное</a>
+        <a class="global-header__link" href="/requests">Заявки</a>
+        <a class="global-header__link" href="/helpers">Помощники</a>
+        <a class="global-header__link" href="/contests">Конкурсы</a>
+        <a class="global-header__link" href="/random">Случайная работа</a>
+      </nav>
+
+      <div class="global-header__controls">
+        <form class="global-header__search" role="search">
+          <input class="global-header__search-input" type="search" placeholder="Поиск по Ficbook" aria-label="Поиск по фанфикам">
+          <button class="global-header__search-btn" type="submit">🔍</button>
+        </form>
+
+        <a class="promo-banner" href="/upgrade">
+          <span class="promo-banner__label">Promo</span>
+          <span class="promo-banner__text">+30% к монетам до 1 декабря</span>
+        </a>
+
+        <button class="notification-bell" id="notification-bell" aria-label="Уведомления" data-notification-toggle>
+          <span class="notification-bell__icon">🔔</span>
+          <span class="notification-bell__count" id="notification-count">3</span>
+        </button>
+
+        <div class="avatar-menu" id="avatar-menu">
+          <button class="avatar-menu__trigger" id="avatar-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="avatar-menu__avatar">👤</span>
+            <span class="avatar-menu__name" id="user-name">Войти</span>
+          </button>
+          <!-- Меню аватара пользователя -->
+          <div class="avatar-menu__dropdown" id="avatar-dropdown" role="menu" aria-hidden="true">
+            <div class="avatar-menu__group">
+              <button class="avatar-menu__item">Улучшить аккаунт</button>
+              <button class="avatar-menu__item">Мои новости</button>
+              <button class="avatar-menu__item">Мой профиль</button>
+              <button class="avatar-menu__item">Личные сообщения</button>
+              <div class="avatar-menu__submenu">
+                <span class="avatar-menu__item avatar-menu__item--label">Кабинет</span>
+                <button class="avatar-menu__item" data-role="author">автора</button>
+                <button class="avatar-menu__item" data-role="reader">читателя</button>
+                <button class="avatar-menu__item" data-role="helper">помощника</button>
+              </div>
+            </div>
+            <div class="avatar-menu__group">
+              <button class="avatar-menu__item">Добавить фанфик</button>
+              <button class="avatar-menu__item">Мои фанфики</button>
+              <button class="avatar-menu__item">Мой блог</button>
+              <button class="avatar-menu__item">Отзывы</button>
+              <button class="avatar-menu__item">История изменений</button>
+              <button class="avatar-menu__item">Сообщения об ошибках</button>
+              <button class="avatar-menu__item">Персональный баннер</button>
+            </div>
+            <div class="avatar-menu__group">
+              <button class="avatar-menu__item">Купить монеты</button>
+              <button class="avatar-menu__item">Заявки</button>
+              <button class="avatar-menu__item">Связь</button>
+              <button class="avatar-menu__item">Настройки</button>
+              <button class="avatar-menu__item avatar-menu__item--danger">Выйти</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="main-content">
-    <div class="container">
-      <!-- Fic Header -->
-      <section class="fic-header" id="fic-header">
-        <div class="fic-header-content">
-          <h1 class="fic-title" id="fic-title">Загрузка...</h1>
-          <div class="fic-meta-header">
-            <a href="#" class="fic-author-link" id="fic-author-link">Автор</a>
-            <span class="fic-divider">•</span>
-            <span class="fic-rating-badge" id="fic-rating">—</span>
-            <span class="fic-divider">•</span>
-            <span class="fic-status" id="fic-status">—</span>
-            <span class="fic-divider">•</span>
-            <span class="fic-updated" id="fic-updated">—</span>
-          </div>
-          
-          <div class="fic-tags-header" id="fic-tags-header"></div>
-          
-          <div class="fic-stats-header">
-            <div class="stat-item">
-              <span class="stat-icon">👁</span>
-              <span class="stat-value" id="fic-views">0</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-icon">❤️</span>
-              <span class="stat-value" id="fic-likes">0</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-icon">📖</span>
-              <span class="stat-value" id="fic-chapters">0</span>
-            </div>
-          </div>
+  <!-- Notifications panel -->
+  <aside class="notifications-panel" id="notifications-panel" aria-hidden="true">
+    <div class="notifications-panel__header">
+      <h3>Уведомления</h3>
+      <button class="notifications-panel__mark" id="mark-all-read">Пометить всё как прочитанное</button>
+    </div>
+    <div class="notifications-panel__list" id="notifications-list"></div>
+    <div class="notifications-panel__footer">
+      <a href="/notifications" class="notifications-panel__link">Все уведомления →</a>
+    </div>
+  </aside>
 
-          <div class="fic-actions">
-            <button class="btn btn-primary" id="like-btn">❤️ Нравится</button>
-            <button class="btn btn-outline" id="bookmark-btn">🔖 В закладки</button>
-            <button class="btn btn-outline" id="share-btn">📤 Поделиться</button>
-          </div>
+  <!-- Main Content -->
+  <main class="fic-page">
+    <div class="container fic-page__grid">
+      <!-- Карточка фанфика -->
+      <section class="fic-card" id="fic-card">
+        <div class="fic-card__top">
+          <span class="fic-card__badge" id="fic-id">ID —</span>
+          <span class="fic-card__hot" id="fic-hot">Горячая работа</span>
+        </div>
+        <h1 class="fic-card__title" id="fic-title">Загрузка...</h1>
+        <div class="fic-card__meta">
+          <a class="fic-card__author" href="#" id="fic-author-link">
+            <img src="" alt="" class="fic-card__author-avatar" id="fic-author-avatar">
+            <span class="fic-card__author-name" id="fic-author-name">Автор</span>
+          </a>
+          <span class="fic-card__fandom" id="fic-fandom">Фэндом не указан</span>
+          <span class="fic-card__size" id="fic-size">— слов</span>
+        </div>
+        <div class="fic-card__status">
+          <span class="status-pill" id="fic-genre">Жанр</span>
+          <span class="status-pill" id="fic-rating">Рейтинг</span>
+          <span class="status-pill" id="fic-completion">В процессе</span>
+        </div>
+        <div class="fic-card__tags" id="fic-tags-header"></div>
+        <p class="fic-card__description" id="fic-description">Загрузка...</p>
+        <div class="fic-card__external" id="fic-crosspost"></div>
+        <div class="fic-card__stats">
+          <div class="fic-card__stat"><span>👁</span><strong id="fic-views">0</strong><span>просмотров</span></div>
+          <div class="fic-card__stat"><span>❤️</span><strong id="fic-likes">0</strong><span>лайков</span></div>
+          <div class="fic-card__stat"><span>⭐</span><strong id="fic-favorites">0</strong><span>избранное</span></div>
+          <div class="fic-card__stat"><span>📚</span><strong id="fic-chapters">0</strong><span>глав</span></div>
+        </div>
+        <div class="fic-card__actions">
+          <button class="btn btn-primary" id="like-btn">❤️ Нравится</button>
+          <button class="btn btn-outline" id="bookmark-btn">⭐ В избранное</button>
+          <button class="btn btn-outline" id="share-btn">📤 Поделиться</button>
+        </div>
+        <div class="fic-card__footer">
+          <span id="fic-updated">Обновлено —</span>
+          <span id="fic-publication">Публикация доступна только на ВенКлерФик</span>
         </div>
       </section>
 
-      <!-- Fic Description -->
-      <section class="fic-description-section">
-        <h2>Описание</h2>
-        <p id="fic-description">Загрузка...</p>
-      </section>
+      <!-- Боковая колонка -->
+      <aside class="fic-sidebar">
+        <div class="fic-sidebar__block">
+          <h2>Метрики</h2>
+          <div class="fic-sidebar__metrics">
+            <div class="metric">
+              <span class="metric__label">Лайки</span>
+              <strong class="metric__value" id="sidebar-likes">0</strong>
+            </div>
+            <div class="metric">
+              <span class="metric__label">Просмотры</span>
+              <strong class="metric__value" id="sidebar-views">0</strong>
+            </div>
+            <div class="metric">
+              <span class="metric__label">Избранное</span>
+              <strong class="metric__value" id="sidebar-fav">0</strong>
+            </div>
+          </div>
+        </div>
+        <div class="fic-sidebar__block" id="add-chapter-container"></div>
+      </aside>
+    </div>
 
+    <div class="container">
       <!-- Chapters List -->
       <section class="chapters-section">
-        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
-          <h2>Главы</h2>
-          <div style="display: flex; gap: 1rem;">
-            <div id="add-chapter-container"></div>
-            <button class="btn btn-outline" id="expand-chapters">Развернуть все</button>
+        <div class="chapters-section__header">
+          <div>
+            <h2>Главы</h2>
+            <p class="chapters-section__subtitle">Навигация по частям</p>
           </div>
+          <button class="btn btn-outline" id="expand-chapters">Развернуть все</button>
         </div>
         <div class="chapters-list" id="chapters-list">
           <div class="loading-spinner">Загрузка глав...</div>
@@ -152,6 +223,7 @@
     </div>
   </footer>
 
+  <script src="../js/ui.js" type="module"></script>
   <script type="module" src="../js/fic.js"></script>
 </body>
 </html>

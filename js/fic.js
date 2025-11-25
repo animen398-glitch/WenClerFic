@@ -1,3 +1,9 @@
+import {
+  syncSessionWithServer,
+  getStoredUser,
+  onAuthChange
+} from './session.js';
+
 // Get fic ID from URL
 function getFicId() {
   const path = window.location.pathname;
@@ -12,9 +18,14 @@ const API_BASE = window.location.origin + '/api';
 let currentFic = null;
 let currentUser = null;
 
+onAuthChange((event) => {
+  currentUser = event.detail?.user || null;
+  updateAuthUI();
+});
+
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
+document.addEventListener('DOMContentLoaded', async () => {
+  await checkAuth();
   if (ficId) {
     loadFic(ficId);
     loadChapters(ficId);
@@ -25,10 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
 });
 
-function checkAuth() {
-  const user = localStorage.getItem('user');
-  if (user) {
-    currentUser = JSON.parse(user);
+async function checkAuth() {
+  const cached = getStoredUser();
+  if (cached) {
+    currentUser = cached;
+    updateAuthUI();
+  }
+
+  const session = await syncSessionWithServer();
+  if (session?.user) {
+    currentUser = session.user;
     updateAuthUI();
   }
 }
@@ -87,17 +104,40 @@ function renderFic(fic) {
   currentFic = fic;
   document.getElementById('fic-title').textContent = fic.title;
   document.getElementById('fic-description').textContent = fic.description;
-  document.getElementById('fic-author-link').textContent = fic.author?.username || 'Unknown';
-  document.getElementById('fic-author-link').href = `/author/${fic.authorId}`;
-  document.getElementById('fic-rating').textContent = fic.rating;
-  document.getElementById('fic-status').textContent = fic.status === 'ongoing' ? 'В процессе' : 'Завершен';
-  document.getElementById('fic-status').classList.add(fic.status);
+  document.getElementById('fic-id').textContent = `ID ${fic.id || '—'}`;
+  document.getElementById('fic-hot').textContent = fic.isHot ? 'Горячая работа' : 'Работа автора';
+
+  const authorName = fic.author?.username || 'Неизвестный автор';
+  const authorLink = document.getElementById('fic-author-link');
+  authorLink.textContent = authorName;
+  authorLink.href = `/author/${fic.authorId}`;
+
+  const authorAvatar = document.getElementById('fic-author-avatar');
+  authorAvatar.src = fic.author?.avatar || 'https://via.placeholder.com/80?text=AU';
+  authorAvatar.alt = authorName;
+  document.getElementById('fic-author-name').textContent = authorName;
+
+  document.getElementById('fic-rating').textContent = fic.rating || 'Без рейтинга';
+  const completion = fic.status === 'completed' ? 'Завершён' : 'В процессе';
+  document.getElementById('fic-completion').textContent = completion;
+  document.getElementById('fic-genre').textContent = fic.genre || 'Жанр не указан';
+  document.getElementById('fic-fandom').textContent = fic.fandom || 'Фэндом не указан';
+  document.getElementById('fic-size').textContent = formatWords(fic.words);
+
   document.getElementById('fic-views').textContent = fic.views || 0;
   document.getElementById('fic-likes').textContent = fic.likes || 0;
+  document.getElementById('fic-favorites').textContent = fic.favorites || 0;
   document.getElementById('fic-chapters').textContent = fic.chapters || 0;
+  document.getElementById('sidebar-likes').textContent = fic.likes || 0;
+  document.getElementById('sidebar-views').textContent = fic.views || 0;
+  document.getElementById('sidebar-fav').textContent = fic.favorites || 0;
   
   const updatedDate = new Date(fic.updatedAt);
   document.getElementById('fic-updated').textContent = `Обновлено ${updatedDate.toLocaleDateString('ru-RU')}`;
+  const publication = fic.externalLinks?.length
+    ? `Также опубликовано: ${fic.externalLinks.join(', ')}`
+    : 'Публикация доступна только на WenClerFic';
+  document.getElementById('fic-publication').textContent = publication;
 
   // Render tags
   const tagsContainer = document.getElementById('fic-tags-header');
@@ -190,28 +230,33 @@ function renderChapters(chapters) {
     return;
   }
 
-  container.innerHTML = chapters.map((chapter, index) => `
-    <div class="chapter-item" onclick="window.location.href='/fic/${ficId}/chapter/${chapter.id}'">
-      <div class="chapter-info">
-        <div class="chapter-title">Глава ${chapter.order || index + 1}: ${chapter.title || 'Без названия'}</div>
-        <div class="chapter-meta">
-          ${chapter.createdAt ? new Date(chapter.createdAt).toLocaleDateString('ru-RU') : 'Дата не указана'} • 
-          ${chapter.words || 0} слов
+  container.innerHTML = chapters.map((chapter, index) => {
+    const chapterDate = chapter.createdAt
+      ? new Date(chapter.createdAt).toLocaleDateString('ru-RU')
+      : 'Дата не указана';
+    return `
+      <div class="chapter-item" onclick="window.location.href='/fic/${ficId}/chapter/${chapter.id}'">
+        <div class="chapter-info">
+          <div class="chapter-title">Глава ${chapter.order || index + 1}: ${chapter.title || 'Без названия'}</div>
+          <div class="chapter-item__meta">
+            <span>${chapterDate}</span>
+            <span>${chapter.words || 0} слов</span>
+          </div>
+        </div>
+        <div class="chapter-actions">
+          <button class="chapter-btn" onclick="event.stopPropagation(); window.location.href='/fic/${ficId}/chapter/${chapter.id}'">
+            Читать
+          </button>
+          ${isAuthor ? `
+            <button class="chapter-btn" onclick="event.stopPropagation(); window.location.href='/fic/${ficId}/chapter/${chapter.id}/edit'" title="Редактировать главу">
+              ✏️
+            </button>
+            <button class="chapter-btn btn-danger" onclick="event.stopPropagation(); deleteChapter(${chapter.id})" title="Удалить главу">🗑️</button>
+          ` : ''}
         </div>
       </div>
-      <div class="chapter-actions">
-        <button class="chapter-btn" onclick="event.stopPropagation(); window.location.href='/fic/${ficId}/chapter/${chapter.id}'">
-          Читать
-        </button>
-        ${isAuthor ? `
-          <button class="chapter-btn" onclick="event.stopPropagation(); window.location.href='/fic/${ficId}/chapter/${chapter.id}/edit'" title="Редактировать главу" style="background: var(--accent);">
-            ✏️
-          </button>
-          <button class="chapter-btn btn-danger" onclick="event.stopPropagation(); deleteChapter(${chapter.id})" title="Удалить главу">🗑️</button>
-        ` : ''}
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 async function deleteChapter(chapterId) {
@@ -279,11 +324,20 @@ function renderComments(comments) {
               <span class="comment-date">${date.toLocaleDateString('ru-RU')} ${date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
           </div>
+          <div class="comment-actions">
+            <button class="chapter-btn" onclick="event.stopPropagation()">Ответить</button>
+            <button class="chapter-btn btn-danger" onclick="event.stopPropagation()">Пожаловаться</button>
+          </div>
         </div>
         <div class="comment-text">${comment.text}</div>
       </div>
     `;
   }).join('');
+}
+
+function formatWords(count = 0) {
+  if (!count) return 'Размер: —';
+  return `Размер: ${count.toLocaleString('ru-RU')} слов`;
 }
 
 async function handleLike() {
