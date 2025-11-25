@@ -1,5 +1,4 @@
 import { getStoredUser } from './session.js';
-import { showNotification } from './app.js';
 
 const API_BASE = window.location.origin + '/api';
 
@@ -42,7 +41,11 @@ async function handleSubmit(e) {
   
   const user = getStoredUser();
   if (!user) {
-    showNotification('Необходима авторизация', 'error');
+    if (window.showNotification) {
+      window.showNotification('Необходима авторизация', 'error');
+    } else {
+      alert('Необходима авторизация');
+    }
     window.location.href = '/requests';
     return;
   }
@@ -60,32 +63,50 @@ async function handleSubmit(e) {
 
   // Validation
   if (!formData.title) {
-    showNotification('Заголовок обязателен', 'error');
+    const notify = window.showNotification || alert;
+    if (typeof notify === 'function') {
+      notify('Заголовок обязателен', 'error');
+    }
     return;
   }
 
   if (!formData.type) {
-    showNotification('Выберите тип заявки', 'error');
+    const notify = window.showNotification || alert;
+    if (typeof notify === 'function') {
+      notify('Выберите тип заявки', 'error');
+    }
     return;
   }
 
   if (formData.type === 'fanfic' && !formData.fandom) {
-    showNotification('Фэндом обязателен для фанфиков', 'error');
+    const notify = window.showNotification || alert;
+    if (typeof notify === 'function') {
+      notify('Фэндом обязателен для фанфиков', 'error');
+    }
     return;
   }
 
   if (formData.ratings.length === 0) {
-    showNotification('Выберите хотя бы один рейтинг', 'error');
+    const notify = window.showNotification || alert;
+    if (typeof notify === 'function') {
+      notify('Выберите хотя бы один рейтинг', 'error');
+    }
     return;
   }
 
   if (formData.directions.length === 0) {
-    showNotification('Выберите хотя бы одну направленность', 'error');
+    const notify = window.showNotification || alert;
+    if (typeof notify === 'function') {
+      notify('Выберите хотя бы одну направленность', 'error');
+    }
     return;
   }
 
   if (!formData.commentsAllowed) {
-    showNotification('Выберите настройки комментариев', 'error');
+    const notify = window.showNotification || alert;
+    if (typeof notify === 'function') {
+      notify('Выберите настройки комментариев', 'error');
+    }
     return;
   }
 
@@ -103,17 +124,25 @@ async function handleSubmit(e) {
 
     const data = await response.json();
 
+    const notify = window.showNotification || alert;
     if (response.ok) {
-      showNotification('Заявка успешно добавлена', 'success');
+      if (typeof notify === 'function') {
+        notify('Заявка успешно добавлена', 'success');
+      }
       setTimeout(() => {
         window.location.href = '/requests';
       }, 1500);
     } else {
-      showNotification(data.error || 'Ошибка при добавлении заявки', 'error');
+      if (typeof notify === 'function') {
+        notify(data.error || 'Ошибка при добавлении заявки', 'error');
+      }
     }
   } catch (error) {
     console.error('Error adding request:', error);
-    showNotification('Ошибка подключения к серверу', 'error');
+    const notify = window.showNotification || alert;
+    if (typeof notify === 'function') {
+      notify('Ошибка подключения к серверу', 'error');
+    }
   }
 }
 
