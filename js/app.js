@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function init() {
   await checkAuth();
   setupEventListeners();
+  checkOAuthFallback();
   await loadFics();
 }
 
@@ -231,6 +232,28 @@ function setupAuthRequiredTriggers() {
     const desiredTab = trigger.dataset.authRequiredTab || 'register';
     showAuthModal(desiredTab);
   });
+}
+
+function checkOAuthFallback() {
+  // Проверяем localStorage на наличие OAuth сообщений (fallback если postMessage не сработал)
+  try {
+    const oauthMessage = localStorage.getItem('oauth_message');
+    const oauthError = localStorage.getItem('oauth_error');
+    
+    if (oauthMessage) {
+      localStorage.removeItem('oauth_message');
+      const message = JSON.parse(oauthMessage);
+      handleOAuthMessage({ data: message });
+    }
+    
+    if (oauthError) {
+      localStorage.removeItem('oauth_error');
+      const error = JSON.parse(oauthError);
+      handleOAuthMessage({ data: error });
+    }
+  } catch (e) {
+    console.warn('Error checking OAuth fallback:', e);
+  }
 }
 
 async function handleLogin(e) {
@@ -544,6 +567,9 @@ async function handleOAuth(provider, action) {
 
       oauthCheckInterval = setInterval(() => {
         try {
+          // Проверяем localStorage на наличие OAuth сообщений (fallback)
+          checkOAuthFallback();
+          
           if (!oauthPopup) {
             clearInterval(oauthCheckInterval);
             oauthCheckInterval = null;
@@ -555,13 +581,15 @@ async function handleOAuth(provider, action) {
             clearInterval(oauthCheckInterval);
             oauthCheckInterval = null;
             oauthPopup = null;
+            // Финальная проверка localStorage перед закрытием
+            checkOAuthFallback();
             checkAuth();
           }
         } catch (e) {
           // Игнорируем ошибки Cross-Origin-Opener-Policy
-          // Полагаемся на postMessage для определения закрытия окна
+          // Полагаемся на postMessage и localStorage для определения закрытия окна
         }
-      }, 1000);
+      }, 500);
     } else {
       window.location.href = `${API_BASE}/auth/${provider}?action=${action}`;
     }

@@ -356,12 +356,38 @@ app.get('/api/auth/google/callback', async (req, res) => {
     const { code, state } = req.query;
     
     if (!code) {
-      return res.send('<script>window.opener.postMessage({type: "oauth-error", error: "Ошибка авторизации"}, "*"); window.close();</script>');
+      return res.send(`<!DOCTYPE html>
+<html><head><title>OAuth Callback</title></head>
+<body><script>
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({type: "oauth-error", error: "Ошибка авторизации"}, "*");
+    } else {
+      localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "Ошибка авторизации"}));
+    }
+  } catch(e) {
+    localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "Ошибка авторизации"}));
+  }
+  window.close();
+</script></body></html>`);
     }
 
     // Обменять code на токен через Google API
     if (!OAUTH_CONFIG.google.clientId || !OAUTH_CONFIG.google.clientSecret) {
-      return res.send('<script>window.opener.postMessage({type: "oauth-error", error: "OAuth не настроен. Добавьте ключи в .env"}, "*"); window.close();</script>');
+      return res.send(`<!DOCTYPE html>
+<html><head><title>OAuth Callback</title></head>
+<body><script>
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({type: "oauth-error", error: "OAuth не настроен. Добавьте ключи в .env"}, "*");
+    } else {
+      localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "OAuth не настроен. Добавьте ключи в .env"}));
+    }
+  } catch(e) {
+    localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "OAuth не настроен. Добавьте ключи в .env"}));
+  }
+  window.close();
+</script></body></html>`);
     }
 
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -382,7 +408,21 @@ app.get('/api/auth/google/callback', async (req, res) => {
 
     if (!tokenData.access_token) {
       console.error('Token error:', tokenData);
-      return res.send(`<script>window.opener.postMessage({type: "oauth-error", error: "${tokenData.error || 'Ошибка получения токена'}"}, "*"); window.close();</script>`);
+      const errorMsg = (tokenData.error || 'Ошибка получения токена').replace(/"/g, '&quot;');
+      return res.send(`<!DOCTYPE html>
+<html><head><title>OAuth Callback</title></head>
+<body><script>
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({type: "oauth-error", error: "${errorMsg}"}, "*");
+    } else {
+      localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "${errorMsg}"}));
+    }
+  } catch(e) {
+    localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "${errorMsg}"}));
+  }
+  window.close();
+</script></body></html>`);
     }
 
     // Получить информацию о пользователе
@@ -395,7 +435,20 @@ app.get('/api/auth/google/callback', async (req, res) => {
     const googleUser = await userResponse.json();
 
     if (!googleUser.email) {
-      return res.send('<script>window.opener.postMessage({type: "oauth-error", error: "Не удалось получить email пользователя"}, "*"); window.close();</script>');
+      return res.send(`<!DOCTYPE html>
+<html><head><title>OAuth Callback</title></head>
+<body><script>
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({type: "oauth-error", error: "Не удалось получить email пользователя"}, "*");
+    } else {
+      localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "Не удалось получить email пользователя"}));
+    }
+  } catch(e) {
+    localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "Не удалось получить email пользователя"}));
+  }
+  window.close();
+</script></body></html>`);
     }
 
     // Найти или создать пользователя
@@ -422,37 +475,69 @@ app.get('/api/auth/google/callback', async (req, res) => {
         suggestedUsername: user.username
       });
 
-      return res.send(`
-        <script>
-          window.opener.postMessage({
-            type: 'oauth-profile-required',
-            provider: 'google',
-            token: '${pending.token}',
-            email: ${JSON.stringify(googleUser.email)},
-            username: ${JSON.stringify(user.username)},
-            avatar: ${JSON.stringify(googleUser.picture || '')}
-          }, '*');
-          window.close();
-        </script>
-      `);
+      return res.send(`<!DOCTYPE html>
+<html><head><title>OAuth Callback</title></head>
+<body><script>
+  const message = {
+    type: 'oauth-profile-required',
+    provider: 'google',
+    token: ${JSON.stringify(pending.token)},
+    email: ${JSON.stringify(googleUser.email)},
+    username: ${JSON.stringify(user.username)},
+    avatar: ${JSON.stringify(googleUser.picture || '')}
+  };
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage(message, '*');
+    } else {
+      localStorage.setItem('oauth_message', JSON.stringify(message));
+    }
+  } catch(e) {
+    localStorage.setItem('oauth_message', JSON.stringify(message));
+  }
+  window.close();
+</script></body></html>`);
     }
 
     const userWithoutPassword = serializeUser(user);
     const token = await createSessionForUser(res, user.id, true);
 
-    res.send(`
-      <script>
-        window.opener.postMessage({
-          type: 'oauth-success',
-          user: ${JSON.stringify(userWithoutPassword)},
-          token: '${token}'
-        }, '*');
-        window.close();
-      </script>
-    `);
+    res.send(`<!DOCTYPE html>
+<html><head><title>OAuth Callback</title></head>
+<body><script>
+  const message = {
+    type: 'oauth-success',
+    user: ${JSON.stringify(userWithoutPassword)},
+    token: ${JSON.stringify(token)}
+  };
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage(message, '*');
+    } else {
+      localStorage.setItem('oauth_message', JSON.stringify(message));
+    }
+  } catch(e) {
+    localStorage.setItem('oauth_message', JSON.stringify(message));
+  }
+  window.close();
+</script></body></html>`);
   } catch (error) {
     console.error('Google OAuth error:', error);
-    res.send(`<script>window.opener.postMessage({type: "oauth-error", error: "Ошибка сервера: ${error.message}"}, "*"); window.close();</script>`);
+    const errorMsg = error.message.replace(/"/g, '&quot;').replace(/\n/g, ' ');
+    res.send(`<!DOCTYPE html>
+<html><head><title>OAuth Callback</title></head>
+<body><script>
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({type: "oauth-error", error: "Ошибка сервера: ${errorMsg}"}, "*");
+    } else {
+      localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "Ошибка сервера: ${errorMsg}"}));
+    }
+  } catch(e) {
+    localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "Ошибка сервера: ${errorMsg}"}));
+  }
+  window.close();
+</script></body></html>`);
   }
 });
 
@@ -524,7 +609,20 @@ app.get('/api/auth/facebook/callback', async (req, res) => {
     const { code, state } = req.query;
     
     if (!code) {
-      return res.send('<script>window.opener.postMessage({type: "oauth-error", error: "Ошибка авторизации"}, "*"); window.close();</script>');
+      return res.send(`<!DOCTYPE html>
+<html><head><title>OAuth Callback</title></head>
+<body><script>
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({type: "oauth-error", error: "Ошибка авторизации"}, "*");
+    } else {
+      localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "Ошибка авторизации"}));
+    }
+  } catch(e) {
+    localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "Ошибка авторизации"}));
+  }
+  window.close();
+</script></body></html>`);
     }
 
     // В продакшене обменять code на токен через Facebook API
@@ -549,18 +647,41 @@ app.get('/api/auth/facebook/callback', async (req, res) => {
     const userWithoutPassword = serializeUser(user);
     const token = await createSessionForUser(res, user.id, true);
 
-    res.send(`
-      <script>
-        window.opener.postMessage({
-          type: 'oauth-success',
-          user: ${JSON.stringify(userWithoutPassword)},
-          token: '${token}'
-        }, '*');
-        window.close();
-      </script>
-    `);
+    res.send(`<!DOCTYPE html>
+<html><head><title>OAuth Callback</title></head>
+<body><script>
+  const message = {
+    type: 'oauth-success',
+    user: ${JSON.stringify(userWithoutPassword)},
+    token: ${JSON.stringify(token)}
+  };
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage(message, '*');
+    } else {
+      localStorage.setItem('oauth_message', JSON.stringify(message));
+    }
+  } catch(e) {
+    localStorage.setItem('oauth_message', JSON.stringify(message));
+  }
+  window.close();
+</script></body></html>`);
   } catch (error) {
-    res.send('<script>window.opener.postMessage({type: "oauth-error", error: "Ошибка сервера"}, "*"); window.close();</script>');
+    const errorMsg = error.message ? error.message.replace(/"/g, '&quot;').replace(/\n/g, ' ') : 'Ошибка сервера';
+    res.send(`<!DOCTYPE html>
+<html><head><title>OAuth Callback</title></head>
+<body><script>
+  try {
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({type: "oauth-error", error: "${errorMsg}"}, "*");
+    } else {
+      localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "${errorMsg}"}));
+    }
+  } catch(e) {
+    localStorage.setItem('oauth_error', JSON.stringify({type: "oauth-error", error: "${errorMsg}"}));
+  }
+  window.close();
+</script></body></html>`);
   }
 });
 
