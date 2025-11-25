@@ -81,7 +81,7 @@ function setupEventListeners() {
     if (state.currentUser) {
       userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
     } else {
-      showAuthModal();
+      showAuthModal('login');
     }
   });
 
@@ -115,21 +115,7 @@ function setupEventListeners() {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const tabName = link.dataset.tab;
-      
-      // Update nav tabs
-      document.querySelectorAll('.auth-nav-tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      link.closest('.auth-nav-tab').classList.add('active');
-      
-      // Update panes
-      if (tabName === 'login') {
-        loginPane.classList.add('active');
-        registerPane.classList.remove('active');
-      } else {
-        loginPane.classList.remove('active');
-        registerPane.classList.add('active');
-      }
+      setAuthTab(tabName);
     });
   });
 
@@ -191,17 +177,61 @@ function setupEventListeners() {
       performSearch(searchInput.value);
     }
   });
+  setupAuthRequiredTriggers();
 }
 
-function showAuthModal() {
+function showAuthModal(defaultTab = 'login') {
   const authModal = document.getElementById('auth-modal');
   if (authModal) {
     authModal.style.display = 'flex';
+    setAuthTab(defaultTab);
   }
 }
 
 // Экспортируем функцию для использования в других файлах
 window.showAuthModal = showAuthModal;
+
+function setAuthTab(tabName = 'login') {
+  const loginPane = document.getElementById('login-section');
+  const registerPane = document.getElementById('register-section');
+  const navTabs = document.querySelectorAll('.auth-nav-tab');
+
+  navTabs.forEach(tab => {
+    const link = tab.querySelector('.auth-nav-link');
+    if (link?.dataset.tab === tabName) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+
+  if (loginPane && registerPane) {
+    if (tabName === 'login') {
+      loginPane.classList.add('active');
+      registerPane.classList.remove('active');
+    } else {
+      loginPane.classList.remove('active');
+      registerPane.classList.add('active');
+    }
+  }
+}
+
+function setupAuthRequiredTriggers() {
+  document.addEventListener('click', (event) => {
+    const trigger = event.target.closest('[data-auth-required]');
+    if (!trigger) {
+      return;
+    }
+
+    if (state.currentUser) {
+      return;
+    }
+
+    event.preventDefault();
+    const desiredTab = trigger.dataset.authRequiredTab || 'register';
+    showAuthModal(desiredTab);
+  });
+}
 
 async function handleLogin(e) {
   e.preventDefault();
