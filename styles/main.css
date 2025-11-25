@@ -927,6 +927,63 @@ body {
   color: var(--text-primary);
 }
 
+.complete-profile-content {
+  max-width: 520px;
+  width: 95%;
+}
+
+.complete-profile-body h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.complete-profile-description {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.complete-profile-email {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.complete-profile-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.complete-profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary-color);
+}
+
+.complete-profile-label {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.complete-profile-suggested {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.complete-profile-body .form-group label {
+  color: var(--text-secondary);
+}
+
 /* Auth Modal Styles - Updated Design */
 .auth-modal-wrapper {
   background: linear-gradient(135deg, #1a0a2e 0%, #16213e 100%);

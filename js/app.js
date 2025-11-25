@@ -19,8 +19,12 @@ const state = {
     rating: '',
     sort: 'newest'
   },
-  viewMode: 'grid'
+  viewMode: 'grid',
+  pendingProfile: null
 };
+
+let oauthPopup = null;
+let oauthCheckInterval = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -66,6 +70,8 @@ function updateUserUI() {
 
 // Event Listeners
 function setupEventListeners() {
+  window.addEventListener('message', handleOAuthMessage);
+
   // User menu
   const userBtn = document.getElementById('user-btn');
   const userDropdown = document.getElementById('user-dropdown');
@@ -91,6 +97,9 @@ function setupEventListeners() {
   const registerPane = document.getElementById('register-section');
   const loginForm = document.getElementById('login-form');
   const registerForm = document.getElementById('register-form');
+  const completeProfileModal = document.getElementById('complete-profile-modal');
+  const completeProfileClose = document.getElementById('complete-profile-close');
+  const completeProfileForm = document.getElementById('complete-profile-form');
 
   modalClose.addEventListener('click', () => {
     authModal.style.display = 'none';
@@ -126,6 +135,13 @@ function setupEventListeners() {
 
   loginForm.addEventListener('submit', handleLogin);
   registerForm.addEventListener('submit', handleRegister);
+  completeProfileForm?.addEventListener('submit', handleCompleteProfileSubmit);
+  completeProfileClose?.addEventListener('click', closeCompleteProfileModal);
+  completeProfileModal?.addEventListener('click', (e) => {
+    if (e.target === completeProfileModal) {
+      closeCompleteProfileModal();
+    }
+  });
 
   // OAuth buttons
   const googleLoginBtn = document.getElementById('google-login');
@@ -471,69 +487,188 @@ function performSearch(query) {
 
 async function handleOAuth(provider, action) {
   try {
-    // Redirect to OAuth endpoint
-    const response = await fetch(`${API_BASE}/auth/${provider}?action=${action}`, {
-      method: 'GET'
-    });
-    
+    const response = await fetch(`${API_BASE}/auth/${provider}?action=${action}`);
     const data = await response.json();
     
     if (data.authUrl) {
-      // Open OAuth popup
       const width = 500;
       const height = 600;
       const left = (screen.width - width) / 2;
       const top = (screen.height - height) / 2;
-      
-      const popup = window.open(
+
+      closeOAuthPopup();
+      oauthPopup = window.open(
         data.authUrl,
         `${provider}Auth`,
         `width=${width},height=${height},left=${left},top=${top}`
       );
 
-      // Listen for OAuth callback
-      const checkPopup = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkPopup);
+      if (!oauthPopup) {
+        alert('Разрешите всплывающие окна для авторизации через Google');
+        return;
+      }
+
+      if (oauthCheckInterval) {
+        clearInterval(oauthCheckInterval);
+      }
+
+      oauthCheckInterval = setInterval(() => {
+        if (!oauthPopup || oauthPopup.closed) {
+          clearInterval(oauthCheckInterval);
+          oauthCheckInterval = null;
+          oauthPopup = null;
           checkAuth();
         }
       }, 1000);
-
-      const handleOAuthMessage = (event) => {
-        if (!event.data?.type) return;
-
-        if (event.data.type === 'oauth-success') {
-          if (event.data.user && event.data.token) {
-            saveSessionData(event.data.user, event.data.token);
-            state.currentUser = event.data.user;
-            updateUserUI();
-            document.getElementById('auth-modal')?.style.display = 'none';
-            
-            if (window.onAuthSuccess) {
-              window.onAuthSuccess();
-            }
-          }
-          popup?.close();
-          clearInterval(checkPopup);
-          window.removeEventListener('message', handleOAuthMessage);
-        }
-
-        if (event.data.type === 'oauth-error') {
-          alert(event.data.error || 'Ошибка OAuth');
-          popup?.close();
-          clearInterval(checkPopup);
-          window.removeEventListener('message', handleOAuthMessage);
-        }
-      };
-
-      window.addEventListener('message', handleOAuthMessage);
     } else {
-      // Fallback: direct redirect for development
       window.location.href = `${API_BASE}/auth/${provider}?action=${action}`;
     }
   } catch (error) {
     console.error('OAuth error:', error);
     alert('Ошибка подключения к серверу OAuth');
+  }
+}
+
+function handleOAuthMessage(event) {
+  if (!event.data?.type) return;
+
+  if (event.data.type === 'oauth-success') {
+    if (event.data.user && event.data.token) {
+      saveSessionData(event.data.user, event.data.token);
+      state.currentUser = event.data.user;
+      updateUserUI();
+      document.getElementById('auth-modal')?.style.display = 'none';
+      if (window.onAuthSuccess) {
+        window.onAuthSuccess();
+      }
+      checkAuth();
+    } else {
+      checkAuth();
+    }
+    closeOAuthPopup();
+    return;
+  }
+
+  if (event.data.type === 'oauth-profile-required') {
+    closeOAuthPopup();
+    document.getElementById('auth-modal')?.style.display = 'none';
+    showCompleteProfileModal(event.data);
+    return;
+  }
+
+  if (event.data.type === 'oauth-error') {
+    alert(event.data.error || 'Ошибка OAuth');
+    closeOAuthPopup();
+  }
+}
+
+function closeOAuthPopup() {
+  if (oauthPopup && !oauthPopup.closed) {
+    oauthPopup.close();
+  }
+  oauthPopup = null;
+  if (oauthCheckInterval) {
+    clearInterval(oauthCheckInterval);
+    oauthCheckInterval = null;
+  }
+}
+
+function showCompleteProfileModal(data) {
+  state.pendingProfile = data;
+  const modal = document.getElementById('complete-profile-modal');
+  if (!modal) return;
+
+  const emailEl = document.getElementById('complete-profile-email');
+  const usernameInput = document.getElementById('complete-username');
+  const suggestedEl = document.getElementById('complete-profile-suggested');
+  const avatarEl = document.getElementById('complete-profile-avatar');
+
+  emailEl.textContent = data.email || '';
+  usernameInput.value = data.username || '';
+  suggestedEl.textContent = data.username || '';
+
+  if (data.avatar) {
+    avatarEl.src = data.avatar;
+    avatarEl.style.display = 'block';
+  } else {
+    avatarEl.style.display = 'none';
+  }
+
+  modal.style.display = 'flex';
+}
+
+function closeCompleteProfileModal() {
+  const modal = document.getElementById('complete-profile-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.getElementById('complete-profile-form')?.reset();
+  state.pendingProfile = null;
+}
+
+async function handleCompleteProfileSubmit(e) {
+  e.preventDefault();
+  if (!state.pendingProfile?.token) {
+    alert('Сессия регистрации истекла. Попробуйте войти через Google ещё раз.');
+    closeCompleteProfileModal();
+    return;
+  }
+
+  const usernameInput = document.getElementById('complete-username');
+  const passwordInput = document.getElementById('complete-password');
+  const passwordConfirmInput = document.getElementById('complete-password-confirm');
+
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value;
+  const confirmPassword = passwordConfirmInput.value;
+
+  if (!username) {
+    alert('Имя пользователя не может быть пустым');
+    return;
+  }
+
+  if (password.length < 6) {
+    alert('Пароль должен быть длиннее 6 символов');
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    alert('Пароли не совпадают');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/auth/complete-profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        token: state.pendingProfile.token,
+        username,
+        password
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      alert(data.error || 'Не удалось завершить регистрацию');
+      if (response.status === 410 || response.status === 404) {
+        closeCompleteProfileModal();
+      }
+      return;
+    }
+
+    state.pendingProfile = null;
+    saveSessionData(data.user, data.token);
+    state.currentUser = data.user;
+    updateUserUI();
+    closeCompleteProfileModal();
+
+    if (window.onAuthSuccess) {
+      window.onAuthSuccess();
+    }
+  } catch (error) {
+    console.error('Complete profile error:', error);
+    alert('Ошибка подключения к серверу');
   }
 }
 

@@ -268,6 +268,42 @@
     </div>
   </div>
 
+  <!-- Complete Profile Modal -->
+  <div class="modal" id="complete-profile-modal" style="display: none;">
+    <div class="modal-content complete-profile-content">
+      <span class="modal-close" id="complete-profile-close">&times;</span>
+      <div class="complete-profile-body">
+        <h3>Завершите регистрацию</h3>
+        <p class="complete-profile-description">
+          Мы подключили ваш Google аккаунт <span id="complete-profile-email" class="complete-profile-email"></span>.
+          Придумайте имя пользователя и пароль, чтобы пользоваться WenClerFic.
+        </p>
+        <div class="complete-profile-summary" id="complete-profile-summary">
+          <img src="" alt="Аватар аккаунта" id="complete-profile-avatar" class="complete-profile-avatar" style="display: none;">
+          <div>
+            <p class="complete-profile-label">Предложенное имя</p>
+            <p id="complete-profile-suggested" class="complete-profile-suggested"></p>
+          </div>
+        </div>
+        <form id="complete-profile-form">
+          <div class="form-group">
+            <label for="complete-username">Имя пользователя</label>
+            <input type="text" id="complete-username" class="form-control" required minlength="3" maxlength="32" placeholder="Например, fan_writer">
+          </div>
+          <div class="form-group">
+            <label for="complete-password">Пароль</label>
+            <input type="password" id="complete-password" class="form-control" required minlength="6" placeholder="Придумайте надежный пароль">
+          </div>
+          <div class="form-group">
+            <label for="complete-password-confirm">Подтвердите пароль</label>
+            <input type="password" id="complete-password-confirm" class="form-control" required minlength="6" placeholder="Повторите пароль">
+          </div>
+          <button type="submit" class="btn btn-auth-submit">Создать аккаунт</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

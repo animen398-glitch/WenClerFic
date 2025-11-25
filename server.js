@@ -5,6 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const cookieParser = require('cookie-parser');
 const db = require('./database');
 
@@ -17,6 +18,9 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()).filter(Boolean)
   : null;
+const PASSWORD_PLACEHOLDER_PREFIX = '__OAUTH_PENDING__';
+const BCRYPT_SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10);
+const PENDING_PROFILE_TTL_MINUTES = parseInt(process.env.PENDING_PROFILE_TTL_MINUTES || '15', 10);
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -65,6 +69,90 @@ async function destroySession(res, token) {
     secure: IS_PRODUCTION,
     sameSite: 'lax'
   });
+}
+
+function serializeUser(user) {
+  if (!user) return null;
+  const { password, ...rest } = user;
+  return rest;
+}
+
+function isPasswordHashed(value) {
+  return typeof value === 'string' && value.startsWith('$2');
+}
+
+function isPendingPassword(value) {
+  return typeof value === 'string' && value.startsWith(PASSWORD_PLACEHOLDER_PREFIX);
+}
+
+function generatePlaceholderPassword() {
+  return `${PASSWORD_PLACEHOLDER_PREFIX}${crypto.randomBytes(12).toString('hex')}`;
+}
+
+async function hashPassword(password) {
+  return bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+}
+
+async function verifyPassword(plainPassword, storedPassword) {
+  if (!storedPassword || isPendingPassword(storedPassword)) {
+    return false;
+  }
+
+  if (isPasswordHashed(storedPassword)) {
+    return bcrypt.compare(plainPassword, storedPassword);
+  }
+
+  return plainPassword === storedPassword;
+}
+
+async function ensureHashedPassword(userId, plainPassword, storedPassword) {
+  if (!storedPassword || isPasswordHashed(storedPassword)) {
+    return;
+  }
+
+  const hashed = await hashPassword(plainPassword);
+  await db.updateUser(userId, { password: hashed });
+}
+
+async function generateUniqueUsername(seed) {
+  const base = (seed || 'reader')
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/gi, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '') || `reader_${Date.now()}`;
+
+  let username = base;
+  let counter = 1;
+  while (true) {
+    const existing = await db.getUserByUsername(username);
+    if (!existing) return username;
+    username = `${base}_${counter++}`;
+  }
+}
+
+async function createPendingProfile(userId, provider, meta = {}) {
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + PENDING_PROFILE_TTL_MINUTES * 60 * 1000).toISOString();
+  await db.deletePendingProfilesByUser(userId);
+  await db.createPendingProfile({
+    userId,
+    token,
+    provider,
+    meta: JSON.stringify(meta),
+    expiresAt
+  });
+  return { token, expiresAt };
+}
+
+function buildUsernameSeedFromProfile(profile = {}) {
+  if (profile.name) return profile.name;
+  if (profile.given_name || profile.family_name) {
+    return `${profile.given_name || ''}_${profile.family_name || ''}`;
+  }
+  if (profile.email) {
+    return profile.email.split('@')[0];
+  }
+  return 'reader';
 }
 
 function extractToken(req) {
@@ -133,14 +221,17 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Имя пользователя уже занято' });
     }
 
+    const hashedPassword = await hashPassword(password);
     const newUser = await db.createUser({
       username,
       email,
-      password, // В продакшене хешировать пароль!
+      password: hashedPassword,
+      isProfileComplete: 1
     });
 
-    const { password: _, ...userWithoutPassword } = newUser;
-    const token = await createSessionForUser(res, newUser.id, rememberSession);
+    const savedUser = await db.getUserById(newUser.id);
+    const userWithoutPassword = serializeUser(savedUser);
+    const token = await createSessionForUser(res, savedUser.id, rememberSession);
 
     res.json({
       user: userWithoutPassword,
@@ -159,11 +250,21 @@ app.post('/api/auth/login', async (req, res) => {
 
     const user = await db.getUserByEmail(email);
 
-    if (!user || user.password !== password) {
+    if (!user) {
       return res.status(401).json({ error: 'Неверный email или пароль' });
     }
 
-    const { password: _, ...userWithoutPassword } = user;
+    if (isPendingPassword(user.password) || user.isProfileComplete === 0) {
+      return res.status(403).json({ error: 'Завершите регистрацию через OAuth, прежде чем входить' });
+    }
+
+    const passwordValid = await verifyPassword(password, user.password);
+    if (!passwordValid) {
+      return res.status(401).json({ error: 'Неверный email или пароль' });
+    }
+
+    await ensureHashedPassword(user.id, password, user.password);
+    const userWithoutPassword = serializeUser(user);
     const token = await createSessionForUser(res, user.id, rememberSession);
 
     res.json({
@@ -297,16 +398,42 @@ app.get('/api/auth/google/callback', async (req, res) => {
     let user = await db.getUserByEmail(googleUser.email);
     
     if (!user) {
-      user = await db.createUser({
-        username: googleUser.name || `GoogleUser_${Date.now()}`,
+      const username = await generateUniqueUsername(buildUsernameSeedFromProfile(googleUser));
+      const placeholderPassword = generatePlaceholderPassword();
+      const created = await db.createUser({
+        username,
         email: googleUser.email,
-        password: null,
+        password: placeholderPassword,
         provider: 'google',
-        avatar: googleUser.picture || null
+        avatar: googleUser.picture || null,
+        isProfileComplete: 0
       });
+      user = await db.getUserById(created.id);
     }
 
-    const { password: _, ...userWithoutPassword } = user;
+    if (user.isProfileComplete === 0 || isPendingPassword(user.password)) {
+      const pending = await createPendingProfile(user.id, 'google', {
+        email: googleUser.email,
+        avatar: googleUser.picture || null,
+        suggestedUsername: user.username
+      });
+
+      return res.send(`
+        <script>
+          window.opener.postMessage({
+            type: 'oauth-profile-required',
+            provider: 'google',
+            token: '${pending.token}',
+            email: ${JSON.stringify(googleUser.email)},
+            username: ${JSON.stringify(user.username)},
+            avatar: ${JSON.stringify(googleUser.picture || '')}
+          }, '*');
+          window.close();
+        </script>
+      `);
+    }
+
+    const userWithoutPassword = serializeUser(user);
     const token = await createSessionForUser(res, user.id, true);
 
     res.send(`
@@ -322,6 +449,65 @@ app.get('/api/auth/google/callback', async (req, res) => {
   } catch (error) {
     console.error('Google OAuth error:', error);
     res.send(`<script>window.opener.postMessage({type: "oauth-error", error: "Ошибка сервера: ${error.message}"}, "*"); window.close();</script>`);
+  }
+});
+
+app.post('/api/auth/complete-profile', async (req, res) => {
+  try {
+    const { token, username, password } = req.body;
+
+    if (!token || !username || !password) {
+      return res.status(400).json({ error: 'Заполните имя пользователя и пароль' });
+    }
+
+    const pending = await db.getPendingProfileByToken(token);
+    if (!pending) {
+      return res.status(404).json({ error: 'Запрос не найден или уже обработан' });
+    }
+
+    const expiresAt = new Date(pending.expiresAt).getTime();
+    if (Number.isFinite(expiresAt) && expiresAt < Date.now()) {
+      await db.deletePendingProfileByToken(token);
+      return res.status(410).json({ error: 'Время на завершение регистрации истекло. Попробуйте войти через Google снова.' });
+    }
+
+    const user = await db.getUserById(pending.userId);
+    if (!user) {
+      await db.deletePendingProfileByToken(token);
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+
+    if (user.isProfileComplete && !isPendingPassword(user.password)) {
+      await db.deletePendingProfileByToken(token);
+      const existingUser = serializeUser(user);
+      const sessionToken = await createSessionForUser(res, user.id, true);
+      return res.json({ user: existingUser, token: sessionToken });
+    }
+
+    const existingUsername = await db.getUserByUsername(username);
+    if (existingUsername && existingUsername.id !== user.id) {
+      return res.status(400).json({ error: 'Имя пользователя уже занято' });
+    }
+
+    const hashedPassword = await hashPassword(password);
+    await db.updateUser(user.id, {
+      username,
+      password: hashedPassword,
+      isProfileComplete: 1
+    });
+
+    await db.deletePendingProfileByToken(token);
+    const updatedUser = await db.getUserById(user.id);
+    const userWithoutPassword = serializeUser(updatedUser);
+    const sessionToken = await createSessionForUser(res, updatedUser.id, true);
+
+    res.json({
+      user: userWithoutPassword,
+      token: sessionToken
+    });
+  } catch (error) {
+    console.error('Complete profile error:', error);
+    res.status(500).json({ error: 'Не удалось завершить регистрацию' });
   }
 });
 
@@ -341,15 +527,18 @@ app.get('/api/auth/facebook/callback', async (req, res) => {
     let user = await db.getUserByEmail(email);
     
     if (!user) {
+      const randomPassword = await hashPassword(crypto.randomBytes(16).toString('hex'));
       user = await db.createUser({
         username,
         email,
-        password: null,
-        provider: 'facebook'
+        password: randomPassword,
+        provider: 'facebook',
+        isProfileComplete: 1
       });
+      user = await db.getUserById(user.id);
     }
 
-    const { password: _, ...userWithoutPassword } = user;
+    const userWithoutPassword = serializeUser(user);
     const token = await createSessionForUser(res, user.id, true);
 
     res.send(`
