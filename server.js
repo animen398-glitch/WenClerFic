@@ -1364,12 +1364,21 @@ app.get('/api/requests', async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const perPage = 20;
 
-    // TODO: implement requests table queries
-    const requests = [];
-    const totalPages = 1;
+    const filters = {
+      tab,
+      type: req.query.type ? (Array.isArray(req.query.type) ? req.query.type : [req.query.type]) : null
+    };
+
+    let allRequests = await db.getAllRequests(filters);
+
+    // Pagination
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    const paginatedRequests = allRequests.slice(start, end);
+    const totalPages = Math.ceil(allRequests.length / perPage);
 
     res.json({
-      requests,
+      requests: paginatedRequests,
       totalPages,
       currentPage: page
     });
@@ -1387,30 +1396,24 @@ app.post('/api/requests', async (req, res) => {
       return res.status(401).json({ error: 'Не авторизован' });
     }
 
-    const { title, type, fandom, description, spoilerDescription, ratings, directions, commentsAllowed } = req.body;
+    const { title, type, fandom, description, spoilerDescription, ratings, directions, commentsAllowed, tags } = req.body;
 
     if (!title || !type) {
       return res.status(400).json({ error: 'Заголовок и тип обязательны' });
     }
 
-    // TODO: implement request creation
-    const newRequest = {
-      id: Date.now(),
+    const newRequest = await db.createRequest({
       userId: user.id,
       title,
       type,
       fandom,
       description,
       spoilerDescription,
-      ratings: JSON.stringify(ratings || []),
-      directions: JSON.stringify(directions || []),
+      ratings,
+      directions,
       commentsAllowed,
-      isHot: false,
-      likes: 0,
-      favorites: 0,
-      comments: 0,
-      createdAt: new Date().toISOString()
-    };
+      tags
+    });
 
     res.status(201).json(newRequest);
   } catch (error) {

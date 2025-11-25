@@ -800,6 +800,89 @@ function getUserActionsByType(userId, actionType, limit = 50) {
   });
 }
 
+// Requests functions
+function createRequest(requestData) {
+  return new Promise((resolve, reject) => {
+    const {
+      userId,
+      title,
+      type,
+      fandom,
+      description,
+      spoilerDescription,
+      ratings,
+      directions,
+      commentsAllowed,
+      tags
+    } = requestData;
+
+    db.run(
+      `INSERT INTO requests (userId, title, type, fandom, description, spoilerDescription, ratings, directions, commentsAllowed, tags, isHot, likes, favorites, comments, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, datetime('now'))`,
+      [
+        userId,
+        title,
+        type,
+        fandom || null,
+        description || null,
+        spoilerDescription || null,
+        JSON.stringify(ratings || []),
+        JSON.stringify(directions || []),
+        commentsAllowed ? 1 : 0,
+        tags ? JSON.stringify(tags) : null
+      ],
+      function(err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve({ id: this.lastID, ...requestData });
+        }
+      }
+    );
+  });
+}
+
+function getAllRequests(filters = {}) {
+  return new Promise((resolve, reject) => {
+    let query = 'SELECT * FROM requests WHERE 1=1';
+    const params = [];
+
+    if (filters.type && Array.isArray(filters.type) && filters.type.length > 0) {
+      const placeholders = filters.type.map(() => '?').join(',');
+      query += ` AND type IN (${placeholders})`;
+      params.push(...filters.type);
+    }
+
+    if (filters.tab === 'hot') {
+      query += ' AND isHot = 1';
+    } else if (filters.tab === 'popular') {
+      query += ' ORDER BY (likes + favorites + comments) DESC';
+    } else {
+      query += ' ORDER BY createdAt DESC';
+    }
+
+    db.all(query, params, (err, rows) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows || []);
+      }
+    });
+  });
+}
+
+function getRequestById(id) {
+  return new Promise((resolve, reject) => {
+    db.get('SELECT * FROM requests WHERE id = ?', [id], (err, row) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(row);
+      }
+    });
+  });
+}
+
 module.exports = {
   db,
   initDatabase,
@@ -842,6 +925,10 @@ module.exports = {
   // User Actions
   logUserAction,
   getUserActions,
-  getUserActionsByType
+  getUserActionsByType,
+  // Requests
+  createRequest,
+  getAllRequests,
+  getRequestById
 };
 

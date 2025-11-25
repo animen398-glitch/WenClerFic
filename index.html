@@ -91,121 +91,26 @@
 
   <!-- Main Content -->
   <main class="fic-page">
-    <div class="container" style="display: flex; gap: 2rem; align-items: flex-start;">
-      <!-- Боковая панель фильтров -->
-      <aside class="filters-sidebar">
-        <div class="filters-section">
-          <h3 class="filters-section__title">Направленности</h3>
-          <div class="filter-item" data-direction="gen">
-            <span>Джен</span>
-            <span class="filter-item__count" id="count-gen">0</span>
-          </div>
-          <div class="filter-item" data-direction="het">
-            <span>Гет</span>
-            <span class="filter-item__count" id="count-het">0</span>
-          </div>
-          <div class="filter-item" data-direction="slash">
-            <span>Слэш</span>
-            <span class="filter-item__count" id="count-slash">0</span>
-          </div>
-          <div class="filter-item" data-direction="femslash">
-            <span>Фемслэш</span>
-            <span class="filter-item__count" id="count-femslash">0</span>
-          </div>
-          <div class="filter-item" data-direction="other">
-            <span>Другие виды отношений</span>
-            <span class="filter-item__count" id="count-other">0</span>
-          </div>
-          <div class="filter-item" data-direction="mixed">
-            <span>Смешанная</span>
-            <span class="filter-item__count" id="count-mixed">0</span>
-          </div>
-          <div class="filter-item" data-direction="article">
-            <span>Статья</span>
-            <span class="filter-item__count" id="count-article">0</span>
-          </div>
-          <div class="filter-item" data-direction="undefined">
-            <span>Не определено</span>
-            <span class="filter-item__count" id="count-undefined">0</span>
+    <div class="container">
+      <!-- Fics Grid -->
+      <section class="fics-section">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h2 class="section-title" style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin: 0;">Популярные фанфики</h2>
+          <div class="view-toggle" style="display: flex; gap: 0.5rem;">
+            <button class="view-btn active" data-view="grid" style="background: rgba(124, 58, 237, 0.2); border: 1px solid var(--primary-color); color: var(--text-primary); padding: 0.5rem; border-radius: 8px; cursor: pointer;">⊞</button>
+            <button class="view-btn" data-view="list" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary); padding: 0.5rem; border-radius: 8px; cursor: pointer;">☰</button>
           </div>
         </div>
-        
-        <div class="filters-section">
-          <h3 class="filters-section__title">Популярные метки</h3>
-          <div id="popular-tags">
-            <!-- Теги будут загружены динамически -->
-            <div class="filter-item">
-              <span>Романтика</span>
-              <span class="filter-item__count">0</span>
-            </div>
-          </div>
+
+        <div class="fics-grid" id="fics-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+          <!-- Fics will be loaded here -->
+          <div class="loading-spinner" id="loading-spinner" style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">Загрузка...</div>
         </div>
-      </aside>
 
-      <!-- Основной контент -->
-      <div style="flex: 1;">
-        <!-- Filters -->
-        <section class="filters-section" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem;">
-          <div class="filters" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-            <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
-              <label style="color: var(--text-secondary); white-space: nowrap;">Жанр:</label>
-              <select id="genre-filter" class="filter-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-primary);">
-                <option value="">Все жанры</option>
-                <option value="romance">Романтика</option>
-                <option value="adventure">Приключения</option>
-                <option value="fantasy">Фэнтези</option>
-                <option value="drama">Драма</option>
-                <option value="horror">Ужасы</option>
-                <option value="comedy">Комедия</option>
-              </select>
-            </div>
-
-            <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
-              <label style="color: var(--text-secondary); white-space: nowrap;">Рейтинг:</label>
-              <select id="rating-filter" class="filter-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-primary);">
-                <option value="">Все рейтинги</option>
-                <option value="G">G</option>
-                <option value="PG">PG</option>
-                <option value="PG-13">PG-13</option>
-                <option value="R">R</option>
-                <option value="NC-17">NC-17</option>
-              </select>
-            </div>
-
-            <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
-              <label style="color: var(--text-secondary); white-space: nowrap;">Сортировка:</label>
-              <select id="sort-filter" class="filter-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-primary);">
-                <option value="newest">Новые</option>
-                <option value="popular">Популярные</option>
-                <option value="rating">По рейтингу</option>
-                <option value="views">По просмотрам</option>
-              </select>
-            </div>
-
-            <button class="btn btn-outline" id="apply-filters" style="background: rgba(124, 58, 237, 0.2); border: 1px solid var(--primary-color); color: var(--text-primary); padding: 0.5rem 1.5rem; border-radius: 8px; cursor: pointer; transition: all 0.2s;">Применить</button>
-          </div>
-        </section>
-
-        <!-- Fics Grid -->
-        <section class="fics-section">
-          <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h2 class="section-title" style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin: 0;">Популярные фанфики</h2>
-            <div class="view-toggle" style="display: flex; gap: 0.5rem;">
-              <button class="view-btn active" data-view="grid" style="background: rgba(124, 58, 237, 0.2); border: 1px solid var(--primary-color); color: var(--text-primary); padding: 0.5rem; border-radius: 8px; cursor: pointer;">⊞</button>
-              <button class="view-btn" data-view="list" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary); padding: 0.5rem; border-radius: 8px; cursor: pointer;">☰</button>
-            </div>
-          </div>
-
-          <div class="fics-grid" id="fics-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
-            <!-- Fics will be loaded here -->
-            <div class="loading-spinner" id="loading-spinner" style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">Загрузка...</div>
-          </div>
-
-          <div class="pagination" id="pagination" style="margin-top: 2rem; display: flex; justify-content: center; gap: 0.5rem;">
-            <!-- Pagination will be generated here -->
-          </div>
-        </section>
-      </div>
+        <div class="pagination" id="pagination" style="margin-top: 2rem; display: flex; justify-content: center; gap: 0.5rem;">
+          <!-- Pagination will be generated here -->
+        </div>
+      </section>
     </div>
   </main>
 
