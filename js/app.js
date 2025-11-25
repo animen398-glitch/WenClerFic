@@ -97,8 +97,9 @@ function setupEventListeners() {
       e.stopPropagation();
       if (state.currentUser) {
         const isOpen = avatarDropdown.getAttribute('aria-hidden') === 'false';
-        avatarDropdown.setAttribute('aria-hidden', isOpen.toString());
-        avatarTrigger.setAttribute('aria-expanded', (!isOpen).toString());
+        const newState = !isOpen;
+        avatarDropdown.setAttribute('aria-hidden', (!newState).toString());
+        avatarTrigger.setAttribute('aria-expanded', newState.toString());
       } else {
         showAuthModal('login');
       }
