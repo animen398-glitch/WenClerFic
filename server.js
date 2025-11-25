@@ -1130,7 +1130,11 @@ app.get('/authors', (req, res) => {
 });
 
 app.get('/settings', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html')); // Настройки
+  res.sendFile(path.join(__dirname, 'pages', 'settings.html')); // Настройки
+});
+
+app.get('/profile/settings', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'settings.html')); // Настройки профиля
 });
 
 app.get('/bookmarks', (req, res) => {

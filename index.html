@@ -5,47 +5,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WenClerFic - Платформа для фанфиков</title>
   <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/fic.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-  <!-- Header -->
-  <header class="header">
-    <div class="container">
-      <div class="header-content">
-        <div class="logo">
-          <a href="/">
-            <span class="logo-icon">📚</span>
-            <span class="logo-text">WenClerFic</span>
-          </a>
-        </div>
-        
-        <nav class="main-nav">
-          <a href="/" class="nav-link active">Главная</a>
-          <a href="/fics" class="nav-link">Каталог</a>
-          <a href="/authors" class="nav-link">Авторы</a>
-          <a href="/create" class="nav-link" data-auth-required="true" data-auth-required-tab="register">Создать</a>
-        </nav>
+<body class="has-fixed-header">
+  <!-- Header: глобальная панель Ficbook-style -->
+  <header class="global-header" data-component="header">
+    <div class="global-header__bar">
+      <a href="/" class="global-header__logo">
+        <span class="global-header__logo-mark">📚</span>
+        <span class="global-header__logo-text">WenClerFic</span>
+      </a>
 
-        <div class="header-actions">
-          <div class="search-box">
-            <input type="text" id="search-input" placeholder="Поиск фанфиков..." class="search-input">
-            <button class="search-btn">🔍</button>
-          </div>
-          
-          <div class="user-menu" id="user-menu">
-            <button class="user-btn" id="user-btn">
-              <span class="user-avatar">👤</span>
-              <span class="user-name" id="user-name">Войти</span>
-            </button>
-            <div class="user-dropdown" id="user-dropdown" style="display: none;">
-              <a href="/profile" class="dropdown-item">Мой профиль</a>
-              <a href="/my-fics" class="dropdown-item">Мои фанфики</a>
-              <a href="/bookmarks" class="dropdown-item">Закладки</a>
-              <a href="/settings" class="dropdown-item">Настройки</a>
-              <hr class="dropdown-divider">
-              <a href="#" class="dropdown-item" id="logout-btn">Выйти</a>
+      <nav class="global-header__nav" aria-label="Основная навигация">
+        <a class="global-header__link" href="/">Главная</a>
+        <a class="global-header__link" href="/fics">Фанфики</a>
+        <a class="global-header__link" href="/authors">Авторы</a>
+        <a class="global-header__link" href="/popular">Популярное</a>
+        <a class="global-header__link" href="/requests">Заявки</a>
+        <a class="global-header__link" href="/helpers">Помощники</a>
+        <a class="global-header__link" href="/contests">Конкурсы</a>
+        <a class="global-header__link" href="/random">Случайная работа</a>
+      </nav>
+
+      <div class="global-header__controls">
+        <form class="global-header__search" role="search">
+          <input class="global-header__search-input" type="search" placeholder="Поиск по Ficbook" aria-label="Поиск по фанфикам" id="search-input">
+          <button class="global-header__search-btn" type="submit">🔍</button>
+        </form>
+
+        <div class="avatar-menu" id="avatar-menu">
+          <button class="avatar-menu__trigger" id="avatar-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="avatar-menu__avatar">👤</span>
+            <span class="avatar-menu__name" id="user-name">Войти</span>
+          </button>
+          <!-- Меню аватара пользователя -->
+          <div class="avatar-menu__dropdown" id="avatar-dropdown" role="menu" aria-hidden="true">
+            <div class="avatar-menu__group">
+              <button class="avatar-menu__item">Улучшить аккаунт</button>
+              <button class="avatar-menu__item">Мои новости</button>
+              <a href="/profile" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Мой профиль</a>
+              <button class="avatar-menu__item">Личные сообщения</button>
+              <div class="avatar-menu__submenu">
+                <span class="avatar-menu__item avatar-menu__item--label">Кабинет</span>
+                <button class="avatar-menu__item" data-role="author">автора</button>
+                <button class="avatar-menu__item" data-role="reader">читателя</button>
+                <button class="avatar-menu__item" data-role="helper">помощника</button>
+              </div>
+            </div>
+            <div class="avatar-menu__group">
+              <a href="/create" class="avatar-menu__item" style="text-decoration: none; color: inherit;" data-auth-required="true" data-auth-required-tab="register">Добавить фанфик</a>
+              <a href="/my-fics" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Мои фанфики</a>
+              <button class="avatar-menu__item">Мой блог</button>
+              <button class="avatar-menu__item">Отзывы</button>
+              <button class="avatar-menu__item">История изменений</button>
+              <button class="avatar-menu__item">Сообщения об ошибках</button>
+              <button class="avatar-menu__item">Персональный баннер</button>
+            </div>
+            <div class="avatar-menu__group">
+              <button class="avatar-menu__item">Купить монеты</button>
+              <button class="avatar-menu__item">Заявки</button>
+              <button class="avatar-menu__item">Связь</button>
+              <a href="/profile/settings" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Настройки</a>
+              <button class="avatar-menu__item avatar-menu__item--danger" id="logout-btn">Выйти</button>
             </div>
           </div>
         </div>
@@ -54,24 +78,14 @@
   </header>
 
   <!-- Main Content -->
-  <main class="main-content">
+  <main class="fic-page">
     <div class="container">
-      <!-- Hero Section -->
-      <section class="hero-section">
-        <h1 class="hero-title">Добро пожаловать в мир фанфиков</h1>
-        <p class="hero-subtitle">Читайте, создавайте и делитесь своими историями</p>
-        <div class="hero-actions">
-          <a href="/create" class="btn btn-primary" data-auth-required="true" data-auth-required-tab="register">Создать фанфик</a>
-          <a href="/fics" class="btn btn-secondary">Найти истории</a>
-        </div>
-      </section>
-
       <!-- Filters -->
-      <section class="filters-section">
-        <div class="filters">
-          <div class="filter-group">
-            <label>Жанр:</label>
-            <select id="genre-filter" class="filter-select">
+      <section class="filters-section" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem;">
+        <div class="filters" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+          <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
+            <label style="color: var(--text-secondary); white-space: nowrap;">Жанр:</label>
+            <select id="genre-filter" class="filter-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-primary);">
               <option value="">Все жанры</option>
               <option value="romance">Романтика</option>
               <option value="adventure">Приключения</option>
@@ -82,9 +96,9 @@
             </select>
           </div>
 
-          <div class="filter-group">
-            <label>Рейтинг:</label>
-            <select id="rating-filter" class="filter-select">
+          <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
+            <label style="color: var(--text-secondary); white-space: nowrap;">Рейтинг:</label>
+            <select id="rating-filter" class="filter-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-primary);">
               <option value="">Все рейтинги</option>
               <option value="G">G</option>
               <option value="PG">PG</option>
@@ -94,9 +108,9 @@
             </select>
           </div>
 
-          <div class="filter-group">
-            <label>Сортировка:</label>
-            <select id="sort-filter" class="filter-select">
+          <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
+            <label style="color: var(--text-secondary); white-space: nowrap;">Сортировка:</label>
+            <select id="sort-filter" class="filter-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-primary);">
               <option value="newest">Новые</option>
               <option value="popular">Популярные</option>
               <option value="rating">По рейтингу</option>
@@ -104,26 +118,26 @@
             </select>
           </div>
 
-          <button class="btn btn-outline" id="apply-filters">Применить</button>
+          <button class="btn btn-outline" id="apply-filters" style="background: rgba(124, 58, 237, 0.2); border: 1px solid var(--primary-color); color: var(--text-primary); padding: 0.5rem 1.5rem; border-radius: 8px; cursor: pointer; transition: all 0.2s;">Применить</button>
         </div>
       </section>
 
       <!-- Fics Grid -->
       <section class="fics-section">
-        <div class="section-header">
-          <h2 class="section-title">Популярные фанфики</h2>
-          <div class="view-toggle">
-            <button class="view-btn active" data-view="grid">⊞</button>
-            <button class="view-btn" data-view="list">☰</button>
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h2 class="section-title" style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin: 0;">Популярные фанфики</h2>
+          <div class="view-toggle" style="display: flex; gap: 0.5rem;">
+            <button class="view-btn active" data-view="grid" style="background: rgba(124, 58, 237, 0.2); border: 1px solid var(--primary-color); color: var(--text-primary); padding: 0.5rem; border-radius: 8px; cursor: pointer;">⊞</button>
+            <button class="view-btn" data-view="list" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary); padding: 0.5rem; border-radius: 8px; cursor: pointer;">☰</button>
           </div>
         </div>
 
-        <div class="fics-grid" id="fics-grid">
+        <div class="fics-grid" id="fics-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
           <!-- Fics will be loaded here -->
-          <div class="loading-spinner" id="loading-spinner">Загрузка...</div>
+          <div class="loading-spinner" id="loading-spinner" style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">Загрузка...</div>
         </div>
 
-        <div class="pagination" id="pagination">
+        <div class="pagination" id="pagination" style="margin-top: 2rem; display: flex; justify-content: center; gap: 0.5rem;">
           <!-- Pagination will be generated here -->
         </div>
       </section>
@@ -304,6 +318,7 @@
     </div>
   </div>
 
+  <script src="js/ui.js" type="module"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

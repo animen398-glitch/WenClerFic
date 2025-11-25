@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Настройки - WenClerFic</title>
+  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="../styles/fic.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .settings-container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 20px;
+      padding-top: 5rem;
+    }
+    .settings-header {
+      margin-bottom: 2rem;
+    }
+    .settings-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    .settings-header p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+    .settings-section {
+      background: linear-gradient(145deg, #1b0b2f, #0e0419);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+    }
+    .settings-section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .settings-section-title::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      border-radius: 2px;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: var(--text-muted);
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .form-hint {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+    .form-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+    .btn-save {
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+    .btn-save:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(124, 58, 237, 0.4);
+    }
+    .btn-save:active {
+      transform: translateY(0);
+    }
+    .btn-save:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-cancel {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--primary-color);
+    }
+    .alert {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    .alert-success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--success);
+    }
+    .alert-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--error);
+    }
+    .alert.show {
+      display: block;
+    }
+    .divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 2rem 0;
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--surface-light);
+      transition: 0.3s;
+      border-radius: 26px;
+      border: 1px solid var(--border-color);
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: var(--text-secondary);
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--gradient-primary);
+      border-color: var(--primary-color);
+    }
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(24px);
+      background-color: white;
+    }
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .toggle-label-text {
+      flex: 1;
+    }
+    @media (max-width: 768px) {
+      .settings-container {
+        margin: 1rem auto;
+      }
+      .settings-section {
+        padding: 1.5rem;
+      }
+      .form-actions {
+        flex-direction: column;
+      }
+      .form-actions button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body class="has-fixed-header">
+  <!-- Header: глобальная панель Ficbook-style -->
+  <header class="global-header" data-component="header">
+    <div class="global-header__bar">
+      <a href="/" class="global-header__logo">
+        <span class="global-header__logo-mark">📚</span>
+        <span class="global-header__logo-text">WenClerFic</span>
+      </a>
+
+      <nav class="global-header__nav" aria-label="Основная навигация">
+        <a class="global-header__link" href="/">Главная</a>
+        <a class="global-header__link" href="/fics">Фанфики</a>
+        <a class="global-header__link" href="/authors">Авторы</a>
+        <a class="global-header__link" href="/popular">Популярное</a>
+        <a class="global-header__link" href="/requests">Заявки</a>
+        <a class="global-header__link" href="/helpers">Помощники</a>
+        <a class="global-header__link" href="/contests">Конкурсы</a>
+        <a class="global-header__link" href="/random">Случайная работа</a>
+      </nav>
+
+      <div class="global-header__controls">
+        <form class="global-header__search" role="search">
+          <input class="global-header__search-input" type="search" placeholder="Поиск по Ficbook" aria-label="Поиск по фанфикам">
+          <button class="global-header__search-btn" type="submit">🔍</button>
+        </form>
+
+        <div class="avatar-menu" id="avatar-menu">
+          <button class="avatar-menu__trigger" id="avatar-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="avatar-menu__avatar">👤</span>
+            <span class="avatar-menu__name" id="user-name">Войти</span>
+          </button>
+          <!-- Меню аватара пользователя -->
+          <div class="avatar-menu__dropdown" id="avatar-dropdown" role="menu" aria-hidden="true">
+            <div class="avatar-menu__group">
+              <button class="avatar-menu__item">Улучшить аккаунт</button>
+              <button class="avatar-menu__item">Мои новости</button>
+              <a href="/profile" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Мой профиль</a>
+              <button class="avatar-menu__item">Личные сообщения</button>
+              <div class="avatar-menu__submenu">
+                <span class="avatar-menu__item avatar-menu__item--label">Кабинет</span>
+                <button class="avatar-menu__item" data-role="author">автора</button>
+                <button class="avatar-menu__item" data-role="reader">читателя</button>
+                <button class="avatar-menu__item" data-role="helper">помощника</button>
+              </div>
+            </div>
+            <div class="avatar-menu__group">
+              <a href="/create" class="avatar-menu__item" style="text-decoration: none; color: inherit;" data-auth-required="true" data-auth-required-tab="register">Добавить фанфик</a>
+              <a href="/my-fics" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Мои фанфики</a>
+              <button class="avatar-menu__item">Мой блог</button>
+              <button class="avatar-menu__item">Отзывы</button>
+              <button class="avatar-menu__item">История изменений</button>
+              <button class="avatar-menu__item">Сообщения об ошибках</button>
+              <button class="avatar-menu__item">Персональный баннер</button>
+            </div>
+            <div class="avatar-menu__group">
+              <button class="avatar-menu__item">Купить монеты</button>
+              <button class="avatar-menu__item">Заявки</button>
+              <button class="avatar-menu__item">Связь</button>
+              <a href="/profile/settings" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Настройки</a>
+              <button class="avatar-menu__item avatar-menu__item--danger" id="logout-btn">Выйти</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="settings-container">
+      <div class="settings-header">
+        <h1>⚙️ Настройки</h1>
+        <p>Управляйте своим аккаунтом и предпочтениями</p>
+      </div>
+
+      <div class="alert alert-success" id="success-alert">
+        Настройки успешно сохранены!
+      </div>
+
+      <div class="alert alert-error" id="error-alert">
+        Произошла ошибка при сохранении настроек.
+      </div>
+
+      <!-- Профиль -->
+      <div class="settings-section">
+        <div class="settings-section-title">Профиль</div>
+        
+        <form id="profile-form">
+          <div class="form-group">
+            <label for="username">Имя пользователя</label>
+            <input 
+              type="text" 
+              id="username" 
+              name="username" 
+              placeholder="Введите имя пользователя"
+              required
+              minlength="3"
+              maxlength="32"
+            >
+            <span class="form-hint">От 3 до 32 символов. Будет видно другим пользователям.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              placeholder="your@email.com"
+              disabled
+            >
+            <span class="form-hint">Email нельзя изменить. Используется для входа в систему.</span>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-save" id="save-profile-btn">Сохранить изменения</button>
+            <button type="button" class="btn-cancel" onclick="window.location.href='/profile'">Отмена</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Безопасность -->
+      <div class="settings-section">
+        <div class="settings-section-title">Безопасность</div>
+        
+        <form id="password-form">
+          <div class="form-group">
+            <label for="current-password">Текущий пароль</label>
+            <input 
+              type="password" 
+              id="current-password" 
+              name="currentPassword" 
+              placeholder="Введите текущий пароль"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="new-password">Новый пароль</label>
+            <input 
+              type="password" 
+              id="new-password" 
+              name="newPassword" 
+              placeholder="Введите новый пароль"
+              minlength="6"
+            >
+            <span class="form-hint">Минимум 6 символов.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="confirm-password">Подтвердите новый пароль</label>
+            <input 
+              type="password" 
+              id="confirm-password" 
+              name="confirmPassword" 
+              placeholder="Повторите новый пароль"
+              minlength="6"
+            >
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-save" id="save-password-btn">Изменить пароль</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Уведомления -->
+      <div class="settings-section">
+        <div class="settings-section-title">Уведомления</div>
+        
+        <div class="form-group">
+          <div class="toggle-label">
+            <div class="toggle-label-text">
+              <label for="notify-comments" style="margin: 0;">Уведомления о комментариях</label>
+              <span class="form-hint" style="margin: 0.25rem 0 0 0;">Получать уведомления когда кто-то комментирует ваши фанфики</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="notify-comments" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="toggle-label">
+            <div class="toggle-label-text">
+              <label for="notify-likes" style="margin: 0;">Уведомления о лайках</label>
+              <span class="form-hint" style="margin: 0.25rem 0 0 0;">Получать уведомления когда кто-то ставит лайк вашим фанфикам</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="notify-likes" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="toggle-label">
+            <div class="toggle-label-text">
+              <label for="notify-updates" style="margin: 0;">Уведомления об обновлениях</label>
+              <span class="form-hint" style="margin: 0.25rem 0 0 0;">Получать уведомления о новых функциях и обновлениях платформы</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="notify-updates" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-save" id="save-notifications-btn">Сохранить настройки</button>
+        </div>
+      </div>
+
+      <!-- Приватность -->
+      <div class="settings-section">
+        <div class="settings-section-title">Приватность</div>
+        
+        <div class="form-group">
+          <div class="toggle-label">
+            <div class="toggle-label-text">
+              <label for="profile-public" style="margin: 0;">Публичный профиль</label>
+              <span class="form-hint" style="margin: 0.25rem 0 0 0;">Разрешить другим пользователям просматривать ваш профиль</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="profile-public" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="toggle-label">
+            <div class="toggle-label-text">
+              <label for="show-email" style="margin: 0;">Показывать email</label>
+              <span class="form-hint" style="margin: 0.25rem 0 0 0;">Отображать ваш email в профиле</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="show-email">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-save" id="save-privacy-btn">Сохранить настройки</button>
+        </div>
+      </div>
+
+      <!-- Опасная зона -->
+      <div class="settings-section" style="border-color: var(--error);">
+        <div class="settings-section-title" style="color: var(--error);">Опасная зона</div>
+        
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+          Эти действия необратимы. Пожалуйста, будьте осторожны.
+        </p>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" id="delete-account-btn" style="border-color: var(--error); color: var(--error);">
+            Удалить аккаунт
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>WenClerFic</h3>
+          <p>Платформа для создания и чтения фанфиков</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 WenClerFic. Все права защищены.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Auth Modal -->
+  <div class="modal" id="auth-modal" style="display: none;">
+    <div class="modal-content auth-modal-wrapper">
+      <span class="modal-close" id="modal-close">&times;</span>
+      <div class="auth-tab-container">
+        <ul class="auth-nav-tabs" role="tablist">
+          <li role="presentation" class="auth-nav-tab active">
+            <a href="#login-section" aria-controls="login" role="tab" data-tab="login" class="auth-nav-link">Вход</a>
+          </li>
+          <li role="presentation" class="auth-nav-tab">
+            <a href="#register-section" aria-controls="register" role="tab" data-tab="register" class="auth-nav-link">Регистрация</a>
+          </li>
+        </ul>
+        
+        <div class="auth-tab-content">
+          <!-- Login Form -->
+          <div role="tabpanel" class="auth-tab-pane active" id="login-section">
+            <form id="login-form" class="auth-form-horizontal">
+              <div class="form-group">
+                <label for="login-email">Email</label>
+                <input type="email" class="form-control" id="login-email" placeholder="Введите email" required>
+              </div>
+              <div class="form-group">
+                <label for="login-password">Пароль</label>
+                <input type="password" class="form-control" id="login-password" placeholder="Введите пароль" required>
+              </div>
+              <div class="form-group">
+                <div class="main-checkbox">
+                  <input value="remember" id="remember-me" name="remember" type="checkbox">
+                  <label for="remember-me"></label>
+                </div>
+                <span class="checkbox-text">Запомнить меня</span>
+              </div>
+              <div class="form-group">
+                <button type="submit" class="btn btn-auth-submit">Войти</button>
+              </div>
+              
+              <div class="auth-divider">
+                <span>или</span>
+              </div>
+              
+              <div class="oauth-buttons">
+                <button type="button" class="oauth-btn oauth-google" id="google-login">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+                    <path d="M9 18c2.43 0 4.467-.806 5.96-2.184l-2.908-2.258c-.806.54-1.837.86-3.052.86-2.347 0-4.33-1.585-5.04-3.715H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+                    <path d="M3.96 10.703c-.18-.54-.282-1.117-.282-1.703s.102-1.163.282-1.703V4.965H.957C.348 6.175 0 7.55 0 9s.348 2.825.957 4.035l3.003-2.332z" fill="#FBBC05"/>
+                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.965L3.96 7.297C4.67 5.167 6.653 3.58 9 3.58z" fill="#EA4335"/>
+                  </svg>
+                  Войти через Google
+                </button>
+                <button type="button" class="oauth-btn oauth-facebook" id="facebook-login">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M18 9c0-4.97-4.03-9-9-9S0 4.03 0 9c0 4.42 3.21 8.08 7.41 8.84v-6.26H5.31V9h2.1V7.02c0-2.07 1.23-3.22 3.13-3.22.91 0 1.86.16 1.86.16v2.05h-1.05c-1.03 0-1.35.64-1.35 1.3V9h2.31l-.37 2.58h-1.94v6.26C14.79 17.08 18 13.42 18 9z" fill="#1877F2"/>
+                  </svg>
+                  Войти через Facebook
+                </button>
+              </div>
+            </form>
+          </div>
+          
+          <!-- Register Form -->
+          <div role="tabpanel" class="auth-tab-pane" id="register-section">
+            <form id="register-form" class="auth-form-horizontal">
+              <div class="form-group">
+                <label for="register-username">Имя пользователя</label>
+                <input type="text" class="form-control" id="register-username" placeholder="Введите имя пользователя" required>
+              </div>
+              <div class="form-group">
+                <label for="register-email">Email</label>
+                <input type="email" class="form-control" id="register-email" placeholder="Введите email" required>
+              </div>
+              <div class="form-group">
+                <label for="register-password">Пароль</label>
+                <input type="password" class="form-control" id="register-password" placeholder="Введите пароль" required>
+              </div>
+              <div class="form-group">
+                <label for="register-password-confirm">Подтвердите пароль</label>
+                <input type="password" class="form-control" id="register-password-confirm" placeholder="Подтвердите пароль" required>
+              </div>
+              <div class="form-group">
+                <button type="submit" class="btn btn-auth-submit">Зарегистрироваться</button>
+              </div>
+              
+              <div class="auth-divider">
+                <span>или</span>
+              </div>
+              
+              <div class="oauth-buttons">
+                <button type="button" class="oauth-btn oauth-google" id="google-register">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+                    <path d="M9 18c2.43 0 4.467-.806 5.96-2.184l-2.908-2.258c-.806.54-1.837.86-3.052.86-2.347 0-4.33-1.585-5.04-3.715H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+                    <path d="M3.96 10.703c-.18-.54-.282-1.117-.282-1.703s.102-1.163.282-1.703V4.965H.957C.348 6.175 0 7.55 0 9s.348 2.825.957 4.035l3.003-2.332z" fill="#FBBC05"/>
+                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.965L3.96 7.297C4.67 5.167 6.653 3.58 9 3.58z" fill="#EA4335"/>
+                  </svg>
+                  Регистрация через Google
+                </button>
+                <button type="button" class="oauth-btn oauth-facebook" id="facebook-register">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M18 9c0-4.97-4.03-9-9-9S0 4.03 0 9c0 4.42 3.21 8.08 7.41 8.84v-6.26H5.31V9h2.1V7.02c0-2.07 1.23-3.22 3.13-3.22.91 0 1.86.16 1.86.16v2.05h-1.05c-1.03 0-1.35.64-1.35 1.3V9h2.31l-.37 2.58h-1.94v6.26C14.79 17.08 18 13.42 18 9z" fill="#1877F2"/>
+                  </svg>
+                  Регистрация через Facebook
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/ui.js" type="module"></script>
+  <script type="module" src="../js/app.js"></script>
+  <script type="module" src="../js/settings.js"></script>
+</body>
+</html>
+

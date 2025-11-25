@@ -6,11 +6,13 @@
   <title>Добавить главу - WenClerFic</title>
   <link rel="stylesheet" href="../styles/main.css">
   <link rel="stylesheet" href="../styles/create.css">
+  <link rel="stylesheet" href="../styles/add-chapter.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- Header -->
   <header class="header">
     <div class="container">
       <div class="header-content">
@@ -48,85 +50,280 @@
     </div>
   </header>
 
-  <main class="main-content">
+  <main class="main-content add-chapter-page">
     <div class="container">
-      <div class="create-page">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-          <div>
-            <h1 class="page-title" id="page-title">Добавить главу</h1>
-            <p id="fic-info" style="color: var(--text-secondary); margin-top: 0.5rem;">
-              <a href="#" id="fic-link" style="color: var(--accent); text-decoration: none;">Загрузка...</a>
-            </p>
-          </div>
-          <a href="#" id="back-to-fic" class="btn btn-outline" style="display: none;">← Вернуться к фанфику</a>
+      <!-- Page Header with Breadcrumbs -->
+      <div class="chapter-page-header">
+        <div class="breadcrumbs">
+          <a href="/profile" class="breadcrumb-link">Кабинет автора</a>
+          <span class="breadcrumb-separator">→</span>
+          <a href="/my-fics" class="breadcrumb-link">Мои фанфики</a>
+          <span class="breadcrumb-separator">→</span>
+          <a href="#" id="breadcrumb-fic-link" class="breadcrumb-link">Загрузка...</a>
+          <span class="breadcrumb-separator">→</span>
+          <span class="breadcrumb-current" id="breadcrumb-current">Добавить часть</span>
         </div>
+        
+        <div class="page-header-actions">
+          <a href="#" id="back-to-fic" class="btn btn-outline">
+            <span class="btn-icon">←</span>
+            Вернуться к фанфику
+          </a>
+        </div>
+      </div>
 
-        <form id="add-chapter-form" class="create-form">
-          <div class="form-section">
+      <!-- Fic Info Header -->
+      <div class="fic-info-header">
+        <div class="fic-info-main">
+          <h1 class="fic-title" id="fic-title-display">
+            <a href="#" id="fic-title-link">Загрузка...</a>
+          </h1>
+          <div class="fic-meta">
+            <span class="fic-id-label">ID работы:</span>
+            <span class="fic-id-value" id="fic-id-display">—</span>
+            <button class="copy-id-btn" id="copy-id-btn" title="Копировать ID">
+              <span class="copy-icon">📋</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content Layout -->
+      <div class="chapter-content-layout">
+        <!-- Main Form Column -->
+        <div class="chapter-form-column">
+          <form id="add-chapter-form" class="chapter-form">
+            <!-- Chapter Title -->
             <div class="form-group">
-              <label for="chapter-title">
-                Название главы *
-                <span style="font-size: 0.875rem; color: var(--text-secondary); font-weight: normal;" id="title-char-count">(0/200)</span>
+              <label for="chapter-title" class="form-label">
+                Название части/главы
+                <span class="char-counter" id="title-char-count">0/200</span>
               </label>
               <input 
                 type="text" 
                 id="chapter-title" 
                 name="title" 
-                placeholder="Введите название главы..."
+                class="form-input"
+                placeholder="Например: 'Глава 1: Начало' или 'Пролог'"
                 required
                 maxlength="200"
               >
-              <small style="color: var(--text-secondary); font-size: 0.875rem;">
-                Например: "Глава 1: Начало" или "Пролог"
-              </small>
+              <small class="form-hint">Например: 'Глава 1: Начало' или 'Пролог'</small>
             </div>
 
+            <!-- Formatting Toolbar -->
+            <div class="formatting-toolbar" id="formatting-toolbar">
+              <button type="button" class="toolbar-btn" data-format="bold" title="Жирный (Ctrl+B)">
+                <strong>B</strong>
+              </button>
+              <button type="button" class="toolbar-btn" data-format="italic" title="Курсив (Ctrl+I)">
+                <em>I</em>
+              </button>
+              <button type="button" class="toolbar-btn" data-format="link" title="Ссылка">
+                🔗
+              </button>
+              <div class="toolbar-separator"></div>
+              <button type="button" class="toolbar-btn" data-format="preview" title="Предпросмотр">
+                👁️
+              </button>
+            </div>
+
+            <!-- Chapter Content -->
             <div class="form-group">
-              <label for="chapter-content">
-                Содержание главы *
-                <span style="font-size: 0.875rem; color: var(--text-secondary); font-weight: normal;">
-                  (<span id="content-word-count">0</span> слов, <span id="content-char-count">0</span> символов)
-                </span>
+              <label for="chapter-content" class="form-label">
+                Содержание
               </label>
               <textarea 
                 id="chapter-content" 
                 name="content" 
+                class="form-textarea chapter-content-textarea"
                 placeholder="Напишите содержание главы...&#10;&#10;Вы можете использовать простые теги для форматирования:&#10;**жирный текст**&#10;*курсив*&#10;&#10;Абзацы разделяются пустой строкой."
                 rows="25"
                 required
-                style="font-family: 'Georgia', 'Times New Roman', serif; line-height: 1.8; font-size: 1.05rem;"
               ></textarea>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
-                <div class="char-count">
-                  <span id="content-word-count-display">0</span> слов
+              
+              <!-- Content Stats -->
+              <div class="content-stats">
+                <div class="stat-item">
+                  <span class="stat-label">Слов:</span>
+                  <span class="stat-value" id="content-word-count">0</span>
                 </div>
-                <div style="font-size: 0.875rem; color: var(--text-secondary);">
-                  Минимум: 100 слов
+                <div class="stat-item">
+                  <span class="stat-label">Символов:</span>
+                  <span class="stat-value" id="content-char-count">0</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Время чтения:</span>
+                  <span class="stat-value" id="reading-time">~0 мин</span>
+                </div>
+                <div class="stat-item stat-requirement" id="word-requirement">
+                  <span class="stat-label">Минимум:</span>
+                  <span class="stat-value">100 слов</span>
                 </div>
               </div>
             </div>
 
-            <div class="form-group" style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
-              <label style="margin-bottom: 0.5rem; display: block;">Советы по написанию:</label>
-              <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-secondary); font-size: 0.875rem; line-height: 1.8;">
-                <li>Используйте описательные названия глав</li>
-                <li>Разбивайте текст на абзацы для удобства чтения</li>
-                <li>Проверяйте орфографию перед публикацией</li>
-                <li>Минимальный объем главы: 100 слов</li>
-              </ul>
+            <!-- Additional Settings (Collapsible) -->
+            <div class="form-section-collapsible">
+              <button type="button" class="collapsible-header" id="additional-settings-toggle">
+                <span>Дополнительные настройки</span>
+                <span class="collapsible-icon">▼</span>
+              </button>
+              <div class="collapsible-content" id="additional-settings-content">
+                <!-- Author Note -->
+                <div class="form-group">
+                  <label for="author-note" class="form-label">
+                    Примечание автора
+                    <span class="form-hint-inline">(отображается перед главой)</span>
+                  </label>
+                  <textarea 
+                    id="author-note" 
+                    name="authorNote" 
+                    class="form-textarea"
+                    placeholder="Необязательное примечание, которое будет показано перед главой..."
+                    rows="3"
+                  ></textarea>
+                </div>
+
+                <!-- Warnings -->
+                <div class="form-group">
+                  <label class="form-label">Предупреждения</label>
+                  <div class="checkbox-group">
+                    <label class="checkbox-label">
+                      <input type="checkbox" name="warnings" value="violence" id="warning-violence">
+                      <span>Содержит сцены насилия</span>
+                    </label>
+                    <label class="checkbox-label">
+                      <input type="checkbox" name="warnings" value="adult" id="warning-adult">
+                      <span>18+</span>
+                    </label>
+                    <label class="checkbox-label">
+                      <input type="checkbox" name="warnings" value="explicit" id="warning-explicit">
+                      <span>Откровенные сцены</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Publication Date -->
+                <div class="form-group">
+                  <label for="publish-date" class="form-label">Дата публикации</label>
+                  <div class="radio-group">
+                    <label class="radio-label">
+                      <input type="radio" name="publishDate" value="now" checked id="publish-now">
+                      <span>Опубликовать сразу</span>
+                    </label>
+                    <label class="radio-label">
+                      <input type="radio" name="publishDate" value="scheduled" id="publish-scheduled">
+                      <span>Запланировать публикацию</span>
+                    </label>
+                  </div>
+                  <input 
+                    type="datetime-local" 
+                    id="publish-date-input" 
+                    class="form-input"
+                    style="display: none; margin-top: 0.5rem;"
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="form-actions">
+              <button type="button" class="btn btn-outline" id="cancel-btn">
+                Отмена
+              </button>
+              <button type="button" class="btn btn-outline" id="save-draft-btn">
+                Сохранить черновик
+              </button>
+              <button type="button" class="btn btn-outline" id="preview-btn">
+                Предпросмотр
+              </button>
+              <button type="submit" class="btn btn-primary" id="submit-btn">
+                Опубликовать главу
+              </button>
+            </div>
+          </form>
+
+          <!-- Auto-save Notification -->
+          <div class="auto-save-notification" id="auto-save-notification">
+            <span class="notification-icon">💾</span>
+            <span class="notification-text">Черновик сохранён</span>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="chapter-sidebar" id="chapter-sidebar">
+          <!-- Fic Info Card -->
+          <div class="sidebar-card">
+            <h3 class="sidebar-card-title">Информация о фанфике</h3>
+            <div class="sidebar-fic-info" id="sidebar-fic-info">
+              <div class="sidebar-loading">Загрузка...</div>
+            </div>
+            <div class="sidebar-actions">
+              <a href="#" id="sidebar-edit-fic" class="sidebar-link">
+                ✏️ Редактировать фанфик
+              </a>
+              <a href="#" id="sidebar-manage-chapters" class="sidebar-link">
+                📚 Управление главами
+              </a>
             </div>
           </div>
 
-          <div class="form-actions">
-            <button type="button" class="btn btn-outline" id="cancel-btn">Отмена</button>
-            <button type="button" class="btn btn-outline" id="save-draft-btn" style="display: none;">Сохранить черновик</button>
-            <button type="submit" class="btn btn-primary" id="submit-btn">Опубликовать главу</button>
+          <!-- Existing Chapters List -->
+          <div class="sidebar-card" id="chapters-list-card">
+            <h3 class="sidebar-card-title">Существующие главы</h3>
+            <div class="chapters-list" id="chapters-list">
+              <div class="sidebar-loading">Загрузка...</div>
+            </div>
           </div>
-        </form>
+
+          <!-- Tips Card -->
+          <div class="sidebar-card">
+            <h3 class="sidebar-card-title">Советы по написанию</h3>
+            <ul class="tips-list">
+              <li>Используйте описательные названия глав</li>
+              <li>Разбивайте текст на абзацы для удобства чтения</li>
+              <li>Проверяйте орфографию перед публикацией</li>
+              <li>Минимальный объем главы: 100 слов</li>
+              <li>Используйте форматирование для выделения важных моментов</li>
+            </ul>
+          </div>
+
+          <!-- Rules Card -->
+          <div class="sidebar-card">
+            <h3 class="sidebar-card-title">Правила публикации</h3>
+            <ul class="rules-list">
+              <li>Соблюдайте авторские права</li>
+              <li>Не публикуйте оскорбительный контент</li>
+              <li>Отмечайте предупреждения, если необходимо</li>
+              <li>Минимум 100 слов для публикации</li>
+            </ul>
+          </div>
+        </aside>
       </div>
     </div>
   </main>
 
+  <!-- Preview Modal -->
+  <div class="modal" id="preview-modal" style="display: none;">
+    <div class="modal-content preview-modal-content">
+      <div class="preview-modal-header">
+        <h2 class="preview-title">Предпросмотр главы</h2>
+        <button class="modal-close" id="preview-close">&times;</button>
+      </div>
+      <div class="preview-modal-body">
+        <div class="preview-chapter-title" id="preview-chapter-title"></div>
+        <div class="preview-author-note" id="preview-author-note" style="display: none;"></div>
+        <div class="preview-content" id="preview-content"></div>
+      </div>
+      <div class="preview-modal-footer">
+        <button class="btn btn-outline" id="preview-close-btn">Закрыть</button>
+        <button class="btn btn-primary" id="preview-publish-btn">Опубликовать</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
   <footer class="footer">
     <div class="container">
       <div class="footer-content">
@@ -141,7 +338,7 @@
     </div>
   </footer>
 
-  <!-- Auth Modal -->
+  <!-- Auth Modal (from main.css) -->
   <div class="modal" id="auth-modal" style="display: none;">
     <div class="modal-content auth-modal-wrapper">
       <span class="modal-close" id="modal-close">&times;</span>
@@ -257,4 +454,3 @@
   <script type="module" src="../js/add-chapter.js"></script>
 </body>
 </html>
-

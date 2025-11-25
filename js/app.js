@@ -58,14 +58,28 @@ async function checkAuth() {
 
 function updateUserUI() {
   const userNameEl = document.getElementById('user-name');
-  const userBtn = document.getElementById('user-btn');
+  const avatarTrigger = document.getElementById('avatar-trigger');
+  const userBtn = document.getElementById('user-btn'); // fallback
   
   if (state.currentUser) {
-    userNameEl.textContent = state.currentUser.username;
-    userBtn.style.cursor = 'pointer';
+    if (userNameEl) userNameEl.textContent = state.currentUser.username;
+    if (avatarTrigger) {
+      const avatarEl = avatarTrigger.querySelector('.avatar-menu__avatar');
+      if (avatarEl && state.currentUser.avatar) {
+        avatarEl.style.backgroundImage = `url(${state.currentUser.avatar})`;
+        avatarEl.style.backgroundSize = 'cover';
+        avatarEl.textContent = '';
+      }
+    }
   } else {
-    userNameEl.textContent = 'Войти';
-    userBtn.style.cursor = 'pointer';
+    if (userNameEl) userNameEl.textContent = 'Войти';
+    if (avatarTrigger) {
+      const avatarEl = avatarTrigger.querySelector('.avatar-menu__avatar');
+      if (avatarEl) {
+        avatarEl.style.backgroundImage = '';
+        avatarEl.textContent = '👤';
+      }
+    }
   }
 }
 
@@ -73,22 +87,45 @@ function updateUserUI() {
 function setupEventListeners() {
   window.addEventListener('message', handleOAuthMessage);
 
-  // User menu
-  const userBtn = document.getElementById('user-btn');
-  const userDropdown = document.getElementById('user-dropdown');
+  // User menu (новый global-header стиль)
+  const avatarTrigger = document.getElementById('avatar-trigger');
+  const avatarDropdown = document.getElementById('avatar-dropdown');
+  const userBtn = document.getElementById('user-btn'); // fallback для старых страниц
   
-  userBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (state.currentUser) {
-      userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
-    } else {
-      showAuthModal('login');
-    }
-  });
+  if (avatarTrigger) {
+    avatarTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (state.currentUser) {
+        const isOpen = avatarDropdown.getAttribute('aria-hidden') === 'false';
+        avatarDropdown.setAttribute('aria-hidden', isOpen.toString());
+        avatarTrigger.setAttribute('aria-expanded', (!isOpen).toString());
+      } else {
+        showAuthModal('login');
+      }
+    });
 
-  document.addEventListener('click', () => {
-    userDropdown.style.display = 'none';
-  });
+    document.addEventListener('click', (e) => {
+      if (avatarDropdown && !avatarDropdown.contains(e.target) && !avatarTrigger.contains(e.target)) {
+        avatarDropdown.setAttribute('aria-hidden', 'true');
+        avatarTrigger.setAttribute('aria-expanded', 'false');
+      }
+    });
+  } else if (userBtn) {
+    // Fallback для старых страниц
+    const userDropdown = document.getElementById('user-dropdown');
+    userBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (state.currentUser) {
+        userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+      } else {
+        showAuthModal('login');
+      }
+    });
+
+    document.addEventListener('click', () => {
+      if (userDropdown) userDropdown.style.display = 'none';
+    });
+  }
 
   // Auth modal
   const authModal = document.getElementById('auth-modal');
@@ -165,19 +202,30 @@ function setupEventListeners() {
     });
   });
 
-  // Search
+  // Search (новый global-header стиль)
   const searchInput = document.getElementById('search-input');
-  const searchBtn = document.querySelector('.search-btn');
+  const searchForm = document.querySelector('.global-header__search');
+  const searchBtn = document.querySelector('.search-btn'); // fallback
   
-  searchBtn.addEventListener('click', () => {
-    performSearch(searchInput.value);
-  });
-
-  searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+  if (searchForm) {
+    searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (searchInput && searchInput.value.trim()) {
+        performSearch(searchInput.value);
+      }
+    });
+  } else if (searchBtn && searchInput) {
+    searchBtn.addEventListener('click', () => {
       performSearch(searchInput.value);
-    }
-  });
+    });
+
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        performSearch(searchInput.value);
+      }
+    });
+  }
+  
   setupAuthRequiredTriggers();
 }
 
@@ -421,26 +469,42 @@ function renderFics() {
 
   grid.innerHTML = state.fics.map(fic => {
     const isAuthor = state.currentUser && fic.authorId === state.currentUser.id;
+    const tags = (fic.tags || []).map(tag => `<span class="status-pill" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);">${tag}</span>`).join('');
     return `
-    <div class="fic-card" onclick="window.location.href='/fic/${fic.id}'">
-      <div class="fic-card-header">
-        <div>
-          <a href="/fic/${fic.id}" class="fic-title" onclick="event.stopPropagation()">${fic.title}</a>
-          <a href="/author/${fic.author?.id || fic.authorId}" class="fic-author" onclick="event.stopPropagation()">${fic.author?.username || 'Unknown'}</a>
-        </div>
-        ${isAuthor ? `<button class="fic-delete-btn" onclick="event.stopPropagation(); deleteFic(${fic.id})" title="Удалить фанфик">🗑️</button>` : ''}
+    <div class="fic-card" style="background: linear-gradient(145deg, #1b0b2f, #0e0419); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 2rem; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45); cursor: pointer; transition: transform 0.2s;" onclick="window.location.href='/fic/${fic.id}'" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+      <div class="fic-card__top" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+        <span class="fic-card__badge" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; background: rgba(255, 255, 255, 0.08); padding: 0.2rem 0.75rem; border-radius: 999px;">ID ${fic.id}</span>
+        ${isAuthor ? `<button style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; padding: 0.25rem 0.75rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem;" onclick="event.stopPropagation(); deleteFic(${fic.id})" title="Удалить фанфик">🗑️</button>` : ''}
       </div>
-      <p class="fic-description">${fic.description || ''}</p>
-      <div class="fic-tags">
-        ${(fic.tags || []).map(tag => `<span class="fic-tag">${tag}</span>`).join('')}
+      <h2 class="fic-card__title" style="font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.1; margin-bottom: 1rem; color: #fff;">
+        <a href="/fic/${fic.id}" onclick="event.stopPropagation()" style="color: inherit; text-decoration: none;">${fic.title || 'Без названия'}</a>
+      </h2>
+      <div class="fic-card__meta" style="display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: center; color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">
+        <a href="/author/${fic.author?.id || fic.authorId}" onclick="event.stopPropagation()" style="color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+          <span>${fic.author?.username || 'Unknown'}</span>
+        </a>
+        <span>•</span>
+        <span>${fic.genre || 'Жанр не указан'}</span>
+        <span>•</span>
+        <span>${fic.chapters || 0} глав</span>
       </div>
-      <div class="fic-meta">
-        <div class="fic-stats">
-          <span class="fic-stat">👁 ${fic.views || 0}</span>
-          <span class="fic-stat">❤️ ${fic.likes || 0}</span>
-          <span class="fic-stat">📖 ${fic.chapters || 0} глав</span>
+      <div class="fic-card__status" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+        <span class="status-pill" style="border-radius: 999px; padding: 0.35rem 0.9rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; border: 1px solid rgba(255, 255, 255, 0.15);">${fic.genre || 'Жанр'}</span>
+        <span class="status-pill" style="border-radius: 999px; padding: 0.35rem 0.9rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; border: 1px solid rgba(255, 255, 255, 0.15);">${fic.rating || 'Рейтинг'}</span>
+        <span class="status-pill" style="border-radius: 999px; padding: 0.35rem 0.9rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; border: 1px solid rgba(255, 255, 255, 0.15);">${fic.status === 'completed' ? 'Завершен' : 'В процессе'}</span>
+      </div>
+      ${tags ? `<div class="fic-card__tags" style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem;">${tags}</div>` : ''}
+      <p class="fic-card__description" style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${fic.description || 'Описание отсутствует'}</p>
+      <div class="fic-card__stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+        <div class="fic-card__stat" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+          <span>👁</span><strong style="font-size: 1.25rem; color: #fff;">${fic.views || 0}</strong><span>просмотров</span>
         </div>
-        <div class="fic-rating">⭐ ${fic.rating || '—'}</div>
+        <div class="fic-card__stat" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+          <span>❤️</span><strong style="font-size: 1.25rem; color: #fff;">${fic.likes || 0}</strong><span>лайков</span>
+        </div>
+        <div class="fic-card__stat" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+          <span>📚</span><strong style="font-size: 1.25rem; color: #fff;">${fic.chapters || 0}</strong><span>глав</span>
+        </div>
       </div>
     </div>
   `;
@@ -481,9 +545,13 @@ window.deleteFic = deleteFic;
 
 function updateViewMode() {
   const grid = document.getElementById('fics-grid');
+  if (!grid) return;
+  
   if (state.viewMode === 'list') {
+    grid.style.gridTemplateColumns = '1fr';
     grid.classList.add('list-view');
   } else {
+    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
     grid.classList.remove('list-view');
   }
 }
