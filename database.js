@@ -33,6 +33,11 @@ function ensureColumn(table, column, definition) {
     if (!exists) {
       db.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`, (alterErr) => {
         if (alterErr) {
+          // Игнорируем ошибку, если столбец уже существует (может произойти при параллельных запросах)
+          if (alterErr.message && alterErr.message.includes('duplicate column')) {
+            // Столбец уже существует, это нормально
+            return;
+          }
           console.error(`Ошибка добавления столбца ${column} в таблицу ${table}:`, alterErr);
         } else {
           console.log(`Столбец ${column} добавлен в таблицу ${table}`);
