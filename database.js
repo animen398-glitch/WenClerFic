@@ -167,14 +167,80 @@ function initDatabase() {
                       console.error('Ошибка создания таблицы user_actions:', actionsErr);
                       reject(actionsErr);
                     } else {
-                      cleanupExpiredSessions().catch(err => {
-                        console.error('Ошибка очистки просроченных сессий:', err);
+                      // Таблица заявок
+                      db.run(`CREATE TABLE IF NOT EXISTS requests (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        userId INTEGER NOT NULL,
+                        title TEXT NOT NULL,
+                        type TEXT NOT NULL,
+                        fandomId INTEGER,
+                        description TEXT,
+                        spoilerDescription TEXT,
+                        ratings TEXT,
+                        directions TEXT,
+                        commentsAllowed TEXT,
+                        isHot BOOLEAN DEFAULT 0,
+                        likes INTEGER DEFAULT 0,
+                        favorites INTEGER DEFAULT 0,
+                        comments INTEGER DEFAULT 0,
+                        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+                        FOREIGN KEY (fandomId) REFERENCES fandoms(id)
+                      )`, (requestsErr) => {
+                        if (requestsErr) {
+                          console.error('Ошибка создания таблицы requests:', requestsErr);
+                          reject(requestsErr);
+                        } else {
+                          // Таблица фэндомов
+                          db.run(`CREATE TABLE IF NOT EXISTS fandoms (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            name TEXT NOT NULL UNIQUE,
+                            description TEXT,
+                            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+                          )`, (fandomsErr) => {
+                            if (fandomsErr) {
+                              console.error('Ошибка создания таблицы fandoms:', fandomsErr);
+                              reject(fandomsErr);
+                            } else {
+                              // Таблица тегов
+                              db.run(`CREATE TABLE IF NOT EXISTS tags (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                name TEXT NOT NULL UNIQUE,
+                                usageCount INTEGER DEFAULT 0,
+                                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+                              )`, (tagsErr) => {
+                                if (tagsErr) {
+                                  console.error('Ошибка создания таблицы tags:', tagsErr);
+                                  reject(tagsErr);
+                                } else {
+                                  // Связь фанфиков и тегов
+                                  db.run(`CREATE TABLE IF NOT EXISTS fic_tags (
+                                    ficId INTEGER NOT NULL,
+                                    tagId INTEGER NOT NULL,
+                                    PRIMARY KEY (ficId, tagId),
+                                    FOREIGN KEY (ficId) REFERENCES fics(id) ON DELETE CASCADE,
+                                    FOREIGN KEY (tagId) REFERENCES tags(id) ON DELETE CASCADE
+                                  )`, (ficTagsErr) => {
+                                    if (ficTagsErr) {
+                                      console.error('Ошибка создания таблицы fic_tags:', ficTagsErr);
+                                      reject(ficTagsErr);
+                                    } else {
+                                      cleanupExpiredSessions().catch(err => {
+                                        console.error('Ошибка очистки просроченных сессий:', err);
+                                      });
+                                      cleanupExpiredPendingProfiles().catch(err => {
+                                        console.error('Ошибка очистки незавершенных профилей:', err);
+                                      });
+                                      console.log('База данных инициализирована');
+                                      resolve();
+                                    }
+                                  });
+                                }
+                              });
+                            }
+                          });
+                        }
                       });
-                      cleanupExpiredPendingProfiles().catch(err => {
-                        console.error('Ошибка очистки незавершенных профилей:', err);
-                      });
-                      console.log('База данных инициализирована');
-                      resolve();
                     }
                   });
                 }
@@ -228,6 +294,15 @@ function getUserByUsername(username) {
     db.get(`SELECT * FROM users WHERE username = ?`, [username], (err, row) => {
       if (err) reject(err);
       else resolve(row);
+    });
+  });
+}
+
+function getAllUsers() {
+  return new Promise((resolve, reject) => {
+    db.all(`SELECT * FROM users ORDER BY createdAt DESC`, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
     });
   });
 }
@@ -733,6 +808,7 @@ module.exports = {
   getUserById,
   getUserByEmail,
   getUserByUsername,
+  getAllUsers,
   updateUser,
   // Fics
   createFic,

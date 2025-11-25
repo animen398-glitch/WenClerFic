@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Популярное - WenClerFic</title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/popular.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="has-fixed-header">
+  <!-- Header -->
+  <header class="global-header" data-component="header">
+    <div class="global-header__bar">
+      <a href="/" class="global-header__logo">
+        <span class="global-header__logo-mark">📚</span>
+        <span class="global-header__logo-text">WenClerFic</span>
+      </a>
+      <nav class="global-header__nav" aria-label="Основная навигация">
+        <a class="global-header__link" href="/">Главная</a>
+        <a class="global-header__link" href="/fics">Фанфики</a>
+        <a class="global-header__link" href="/authors">Авторы</a>
+        <a class="global-header__link active" href="/popular">Популярное</a>
+        <a class="global-header__link" href="/requests">Заявки</a>
+      </nav>
+      <div class="global-header__controls">
+        <form class="global-header__search" role="search">
+          <input class="global-header__search-input" type="search" placeholder="Поиск по Ficbook" aria-label="Поиск по фанфикам" id="search-input">
+          <button class="global-header__search-btn" type="submit">🔍</button>
+        </form>
+        <div class="avatar-menu" id="avatar-menu">
+          <button class="avatar-menu__trigger" id="avatar-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="avatar-menu__avatar">👤</span>
+            <span class="avatar-menu__name" id="user-name">Войти</span>
+          </button>
+          <div class="avatar-menu__dropdown" id="avatar-dropdown" role="menu" aria-hidden="true">
+            <!-- Меню будет загружено через app.js -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="popular-page">
+    <div class="container">
+      <div class="popular-header">
+        <h1 class="page-title">Популярное</h1>
+        <div class="popular-filters">
+          <button class="filter-btn active" data-period="today">Сегодня</button>
+          <button class="filter-btn" data-period="week">Неделя</button>
+          <button class="filter-btn" data-period="month">Месяц</button>
+          <button class="filter-btn" data-period="all">Все время</button>
+        </div>
+      </div>
+
+      <div class="fics-list" id="fics-list">
+        <div class="loading-spinner">Загрузка популярных фанфиков...</div>
+      </div>
+
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </main>
+
+  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/popular.js"></script>
+</body>
+</html>
+

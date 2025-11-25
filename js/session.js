@@ -50,6 +50,8 @@ export async function syncSessionWithServer() {
       if (!response.ok) {
         if (response.status === 401) {
           clearSessionData();
+          // НЕ показывать alert, просто очистить данные
+          return null;
         }
         return null;
       }
@@ -61,6 +63,7 @@ export async function syncSessionWithServer() {
       return data;
     } catch (error) {
       console.warn('Не удалось синхронизировать сессию:', error);
+      // НЕ показывать alert пользователю
       return null;
     } finally {
       syncPromise = null;

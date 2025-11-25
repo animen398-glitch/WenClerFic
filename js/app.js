@@ -159,6 +159,28 @@ function setupEventListeners() {
 
   loginForm.addEventListener('submit', handleLogin);
   registerForm.addEventListener('submit', handleRegister);
+  
+  // Обработчики для показа/скрытия пароля
+  const loginPasswordToggle = document.getElementById('login-password-toggle');
+  const registerPasswordToggle = document.getElementById('register-password-toggle');
+  const loginPasswordInput = document.getElementById('login-password');
+  const registerPasswordInput = document.getElementById('register-password');
+  
+  if (loginPasswordToggle && loginPasswordInput) {
+    loginPasswordToggle.addEventListener('click', () => {
+      const type = loginPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      loginPasswordInput.setAttribute('type', type);
+      loginPasswordToggle.textContent = type === 'password' ? '👁️' : '🙈';
+    });
+  }
+  
+  if (registerPasswordToggle && registerPasswordInput) {
+    registerPasswordToggle.addEventListener('click', () => {
+      const type = registerPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      registerPasswordInput.setAttribute('type', type);
+      registerPasswordToggle.textContent = type === 'password' ? '👁️' : '🙈';
+    });
+  }
   completeProfileForm?.addEventListener('submit', handleCompleteProfileSubmit);
   completeProfileClose?.addEventListener('click', closeCompleteProfileModal);
   completeProfileModal?.addEventListener('click', (e) => {
@@ -187,8 +209,21 @@ function setupEventListeners() {
 
   // Filters
   const applyFiltersBtn = document.getElementById('apply-filters');
-  applyFiltersBtn.addEventListener('click', () => {
-    applyFilters();
+  if (applyFiltersBtn) {
+    applyFiltersBtn.addEventListener('click', () => {
+      applyFilters();
+    });
+  }
+  
+  // Обработчики для фильтров направленности в боковой панели
+  document.querySelectorAll('.filter-item[data-direction]').forEach(item => {
+    item.addEventListener('click', () => {
+      const direction = item.dataset.direction;
+      // Переключаем активное состояние
+      item.classList.toggle('active');
+      // Применяем фильтр
+      applyFilters();
+    });
   });
 
   // View toggle
@@ -232,30 +267,130 @@ function setupEventListeners() {
   setTimeout(() => {
     setupMenuHandlers();
   }, 100);
+  
+  // Универсальные обработчики для всех кнопок
+  setupUniversalHandlers();
+}
+
+// Универсальные обработчики для всех страниц
+function setupUniversalHandlers() {
+  // Обработчики для всех кнопок "Добавить фанфик"
+  document.querySelectorAll('[data-action="add-fic"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!state.currentUser) {
+        showAuthModal('register');
+      } else {
+        window.location.href = '/create';
+      }
+    });
+  });
+
+  // Обработчики для всех кнопок "Горячая работа"
+  document.querySelectorAll('[data-action="hot-work"]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const ficId = btn.dataset.ficId;
+      if (!ficId) {
+        showNotification('Ошибка: ID фанфика не найден', 'error');
+        return;
+      }
+      
+      if (!state.currentUser) {
+        showAuthModal('register');
+        return;
+      }
+      
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE}/fics/${ficId}/hot`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          showNotification('Фанфик добавлен в "Горячее"', 'success');
+        } else {
+          const data = await response.json();
+          showNotification(data.error || 'Ошибка при добавлении в "Горячее"', 'error');
+        }
+      } catch (error) {
+        console.error('Error adding to hot:', error);
+        showNotification('Ошибка подключения к серверу', 'error');
+      }
+    });
+  });
+
+  // Обработчики для всех кнопок "В «ПРОМО»"
+  document.querySelectorAll('[data-action="promo"]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const ficId = btn.dataset.ficId;
+      if (!ficId) {
+        showNotification('Ошибка: ID фанфика не найден', 'error');
+        return;
+      }
+      
+      if (!state.currentUser) {
+        showAuthModal('register');
+        return;
+      }
+      
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE}/fics/${ficId}/promo`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          showNotification('Фанфик добавлен в "Промо"', 'success');
+        } else {
+          const data = await response.json();
+          showNotification(data.error || 'Ошибка при добавлении в "Промо"', 'error');
+        }
+      } catch (error) {
+        console.error('Error adding to promo:', error);
+        showNotification('Ошибка подключения к серверу', 'error');
+      }
+    });
+  });
+  
+  // Обработчики для всех ссылок на фанфики
+  document.querySelectorAll('[data-fic-id]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      const ficId = link.dataset.ficId;
+      if (ficId) {
+        window.location.href = `/fic/${ficId}`;
+      }
+    });
+  });
 }
 
 function setupMenuHandlers() {
-  // Удаляем старые обработчики, чтобы не дублировать
-  const menuItems = document.querySelectorAll('.avatar-menu__item');
-  menuItems.forEach(btn => {
-    // Клонируем элемент, чтобы удалить все обработчики
-    const newBtn = btn.cloneNode(true);
-    btn.parentNode.replaceChild(newBtn, btn);
-  });
-
-  // Обработчики для кнопок "Кабинет"
-  document.querySelectorAll('.avatar-menu__item[data-role]').forEach(btn => {
+  // Обработчики для раскрывающихся подменю
+  document.querySelectorAll('[data-submenu]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const role = btn.dataset.role;
-      if (role === 'author') {
-        window.location.href = '/my-fics';
-      } else if (role === 'reader') {
-        window.location.href = '/bookmarks';
-      } else if (role === 'helper') {
-        alert('Кабинет помощника - в разработке');
-        // window.location.href = '/helper/cabinet';
+      const submenuId = btn.dataset.submenu;
+      const submenu = document.getElementById(`${submenuId}-submenu`);
+      const arrow = btn.querySelector('.arrow');
+      
+      if (submenu) {
+        const isOpen = submenu.style.display !== 'none';
+        submenu.style.display = isOpen ? 'none' : 'block';
+        if (arrow) {
+          arrow.textContent = isOpen ? '▼' : '▲';
+        }
       }
     });
   });
@@ -268,8 +403,8 @@ function setupMenuHandlers() {
     // Пропускаем кнопки, которые уже имеют href (ссылки) - они работают автоматически
     if (href) return;
     
-    // Пропускаем кнопки с data-role (уже обработаны выше)
-    if (btn.dataset.role) return;
+    // Пропускаем кнопки с data-submenu (уже обработаны выше)
+    if (btn.dataset.submenu) return;
     
     // Пропускаем кнопку "Выйти" (уже обработана отдельно)
     if (btn.id === 'logout-btn') return;
@@ -286,10 +421,8 @@ function setupMenuHandlers() {
 }
 
 function handleMenuClick(menuText, button) {
+  // УБРАТЬ: "Улучшить аккаунт" и "Купить монеты" - они удалены из меню
   switch(menuText) {
-    case 'Улучшить аккаунт':
-      showPremiumModal();
-      break;
     case 'Мои новости':
       window.location.href = '/news';
       break;
@@ -324,8 +457,20 @@ function handleMenuClick(menuText, button) {
     case 'Персональный баннер':
       window.location.href = '/profile/banner';
       break;
-    case 'Купить монеты':
-      showCoinsModal();
+    case 'Сборники':
+      window.location.href = '/collections';
+      break;
+    case 'Закладки':
+      window.location.href = '/bookmarks';
+      break;
+    case 'Понравившиеся работы':
+      window.location.href = '/liked';
+      break;
+    case 'Прочитанные работы':
+      window.location.href = '/read';
+      break;
+    case 'Кабинет помощника':
+      showNotification('Кабинет помощника - в разработке', 'info');
       break;
     case 'Заявки':
       window.location.href = '/requests';
@@ -338,90 +483,11 @@ function handleMenuClick(menuText, button) {
       break;
     default:
       console.log('Неизвестная кнопка меню:', menuText);
-      alert(`${menuText} - функция в разработке`);
+      showNotification(`${menuText} - функция в разработке`, 'info');
   }
 }
 
-function showPremiumModal() {
-  // Создаем модальное окно для премиум-аккаунта
-  const modal = document.createElement('div');
-  modal.className = 'modal';
-  modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;';
-  
-  modal.innerHTML = `
-    <div class="modal-content" style="background: var(--surface); border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; position: relative;">
-      <span class="modal-close" style="position: absolute; top: 1rem; right: 1rem; font-size: 2rem; cursor: pointer; color: var(--text-secondary);">&times;</span>
-      <h2 style="margin-bottom: 1rem; color: var(--text-primary);">✨ Улучшить аккаунт</h2>
-      <div style="color: var(--text-secondary); line-height: 1.8;">
-        <p style="margin-bottom: 1rem;"><strong style="color: var(--primary-color);">Премиум-аккаунт</strong> дает вам:</p>
-        <ul style="margin-left: 1.5rem; margin-bottom: 1.5rem;">
-          <li>🚀 Приоритетная поддержка</li>
-          <li>📊 Расширенная статистика</li>
-          <li>🎨 Персональный баннер</li>
-          <li>📝 Неограниченное количество фанфиков</li>
-          <li>🚫 Без рекламы</li>
-        </ul>
-        <p style="color: var(--text-muted); font-size: 0.9rem;">Скоро будет доступно для покупки!</p>
-      </div>
-      <button class="btn btn-primary" style="margin-top: 1.5rem; width: 100%;" onclick="this.closest('.modal').remove()">Понятно</button>
-    </div>
-  `;
-  
-  document.body.appendChild(modal);
-  
-  // Закрытие по клику на фон
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.remove();
-    }
-  });
-  
-  // Закрытие по кнопке X
-  modal.querySelector('.modal-close').addEventListener('click', () => {
-    modal.remove();
-  });
-}
-
-function showCoinsModal() {
-  // Создаем модальное окно для покупки монет
-  const modal = document.createElement('div');
-  modal.className = 'modal';
-  modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;';
-  
-  modal.innerHTML = `
-    <div class="modal-content" style="background: var(--surface); border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; position: relative;">
-      <span class="modal-close" style="position: absolute; top: 1rem; right: 1rem; font-size: 2rem; cursor: pointer; color: var(--text-secondary);">&times;</span>
-      <h2 style="margin-bottom: 1rem; color: var(--text-primary);">🪙 Купить монеты</h2>
-      <div style="color: var(--text-secondary); line-height: 1.8;">
-        <p style="margin-bottom: 1rem;">Монеты можно использовать для:</p>
-        <ul style="margin-left: 1.5rem; margin-bottom: 1.5rem;">
-          <li>⭐ Поднятие фанфика в топ</li>
-          <li>🎁 Покупка премиум-функций</li>
-          <li>💎 Специальные возможности</li>
-        </ul>
-        <div style="background: rgba(124, 58, 237, 0.1); border: 1px solid var(--primary-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-          <p style="margin: 0; color: var(--text-primary);"><strong>Ваш баланс: 0 монет</strong></p>
-        </div>
-        <p style="color: var(--text-muted); font-size: 0.9rem;">Система монет скоро будет доступна!</p>
-      </div>
-      <button class="btn btn-primary" style="margin-top: 1.5rem; width: 100%;" onclick="this.closest('.modal').remove()">Понятно</button>
-    </div>
-  `;
-  
-  document.body.appendChild(modal);
-  
-  // Закрытие по клику на фон
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.remove();
-    }
-  });
-  
-  // Закрытие по кнопке X
-  modal.querySelector('.modal-close').addEventListener('click', () => {
-    modal.remove();
-  });
-}
+// УБРАТЬ: функции showPremiumModal и showCoinsModal больше не нужны
 
 function showAuthModal(defaultTab = 'login') {
   const authModal = document.getElementById('auth-modal');
@@ -529,28 +595,49 @@ async function handleLogin(e) {
         window.onAuthSuccess();
       }
     } else {
-      alert(data.error || 'Ошибка входа');
+      showNotification(data.error || 'Ошибка входа', 'error');
     }
   } catch (error) {
     console.error('Login error:', error);
-    alert('Ошибка подключения к серверу');
+    showNotification('Ошибка подключения к серверу', 'error');
   }
 }
 
 async function handleRegister(e) {
   e.preventDefault();
-  const username = document.getElementById('register-username').value;
-  const email = document.getElementById('register-email').value;
+  const username = document.getElementById('register-username').value.trim();
+  const email = document.getElementById('register-email').value.trim();
   const password = document.getElementById('register-password').value;
-  const confirmPassword = document.getElementById('register-password-confirm').value;
+  const agreeCheckbox = document.getElementById('register-agree');
 
-  if (password !== confirmPassword) {
-    alert('Пароли не совпадают');
+  // Валидация имени пользователя
+  if (!username) {
+    showNotification('Имя пользователя обязательно', 'error');
+    return;
+  }
+  
+  // Проверка правил имени пользователя
+  const usernameRegex = /^[a-zA-Zа-яА-ЯёЁ0-9\s._-]+$/;
+  if (!usernameRegex.test(username)) {
+    showNotification('Имя пользователя содержит недопустимые символы', 'error');
+    return;
+  }
+  
+  // Проверка на смешанные языки
+  const hasLatin = /[a-zA-Z]/.test(username);
+  const hasCyrillic = /[а-яА-ЯёЁ]/.test(username);
+  if (hasLatin && hasCyrillic) {
+    showNotification('Нельзя использовать одновременно латинские и русские буквы', 'error');
     return;
   }
 
   if (password.length < 6) {
-    alert('Пароль должен содержать минимум 6 символов');
+    showNotification('Пароль должен содержать минимум 6 символов', 'error');
+    return;
+  }
+  
+  if (!agreeCheckbox || !agreeCheckbox.checked) {
+    showNotification('Необходимо согласие с правилами сайта', 'error');
     return;
   }
 
@@ -573,18 +660,18 @@ async function handleRegister(e) {
         authModal.style.display = 'none';
       }
       document.getElementById('register-form')?.reset();
-      alert('Регистрация успешна! Добро пожаловать!');
+      showNotification('Регистрация успешна! Добро пожаловать!', 'success');
       
       // Обновляем UI на страницах создания/добавления глав
       if (window.onAuthSuccess) {
         window.onAuthSuccess();
       }
     } else {
-      alert(data.error || 'Ошибка регистрации');
+      showNotification(data.error || 'Ошибка регистрации', 'error');
     }
   } catch (error) {
     console.error('Register error:', error);
-    alert('Ошибка подключения к серверу');
+    showNotification('Ошибка подключения к серверу', 'error');
   }
 }
 
@@ -708,7 +795,44 @@ function renderFics() {
 }
 
 async function deleteFic(ficId) {
-  if (!confirm('Вы уверены, что хотите удалить этот фанфик? Это действие нельзя отменить.')) {
+  // Используем тихое подтверждение вместо confirm
+  const confirmed = await new Promise((resolve) => {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;';
+    
+    modal.innerHTML = `
+      <div class="modal-content" style="background: var(--surface); border-radius: 16px; padding: 2rem; max-width: 400px; width: 90%;">
+        <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Подтверждение удаления</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Вы уверены, что хотите удалить этот фанфик? Это действие нельзя отменить.</p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+          <button class="btn btn-outline" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary); padding: 0.5rem 1.5rem; border-radius: 8px; cursor: pointer;" data-action="cancel">Отмена</button>
+          <button class="btn btn-primary" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; padding: 0.5rem 1.5rem; border-radius: 8px; cursor: pointer;" data-action="confirm">Удалить</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    modal.querySelector('[data-action="cancel"]').addEventListener('click', () => {
+      modal.remove();
+      resolve(false);
+    });
+    
+    modal.querySelector('[data-action="confirm"]').addEventListener('click', () => {
+      modal.remove();
+      resolve(true);
+    });
+    
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+        resolve(false);
+      }
+    });
+  });
+  
+  if (!confirmed) {
     return;
   }
 
@@ -722,15 +846,15 @@ async function deleteFic(ficId) {
     });
 
     if (response.ok) {
-      alert('Фанфик успешно удален');
+      showNotification('Фанфик успешно удален', 'success');
       loadFics();
     } else {
       const data = await response.json();
-      alert(data.error || 'Ошибка при удалении фанфика');
+      showNotification(data.error || 'Ошибка при удалении фанфика', 'error');
     }
   } catch (error) {
     console.error('Error deleting fic:', error);
-    alert('Ошибка подключения к серверу');
+    showNotification('Ошибка подключения к серверу', 'error');
   }
 }
 
@@ -819,7 +943,7 @@ async function handleOAuth(provider, action) {
       );
 
       if (!oauthPopup) {
-        alert('Разрешите всплывающие окна для авторизации через Google');
+        showNotification('Разрешите всплывающие окна для авторизации через Google', 'error');
         return;
       }
 
@@ -895,7 +1019,7 @@ function handleOAuthMessage(event) {
   }
 
   if (event.data.type === 'oauth-error') {
-    alert(event.data.error || 'Ошибка OAuth');
+    showNotification(event.data.error || 'Ошибка OAuth', 'error');
     closeOAuthPopup();
   }
 }
@@ -956,7 +1080,7 @@ function closeCompleteProfileModal() {
 async function handleCompleteProfileSubmit(e) {
   e.preventDefault();
   if (!state.pendingProfile?.token) {
-    alert('Сессия регистрации истекла. Попробуйте войти через Google ещё раз.');
+    showNotification('Сессия регистрации истекла. Попробуйте войти через Google ещё раз.', 'error');
     closeCompleteProfileModal();
     return;
   }
@@ -970,17 +1094,17 @@ async function handleCompleteProfileSubmit(e) {
   const confirmPassword = passwordConfirmInput.value;
 
   if (!username) {
-    alert('Имя пользователя не может быть пустым');
+    showNotification('Имя пользователя не может быть пустым', 'error');
     return;
   }
 
   if (password.length < 6) {
-    alert('Пароль должен быть длиннее 6 символов');
+    showNotification('Пароль должен быть длиннее 6 символов', 'error');
     return;
   }
 
   if (password !== confirmPassword) {
-    alert('Пароли не совпадают');
+    showNotification('Пароли не совпадают', 'error');
     return;
   }
 
@@ -998,7 +1122,7 @@ async function handleCompleteProfileSubmit(e) {
 
     const data = await response.json();
     if (!response.ok) {
-      alert(data.error || 'Не удалось завершить регистрацию');
+      showNotification(data.error || 'Не удалось завершить регистрацию', 'error');
       if (response.status === 410 || response.status === 404) {
         closeCompleteProfileModal();
       }
@@ -1016,9 +1140,28 @@ async function handleCompleteProfileSubmit(e) {
     }
   } catch (error) {
     console.error('Complete profile error:', error);
-    alert('Ошибка подключения к серверу');
+    showNotification('Ошибка подключения к серверу', 'error');
   }
 }
+
+// Заменить все alert на тихие уведомления
+function showNotification(message, type = 'info') {
+  // Создать элемент уведомления вместо alert
+  const notification = document.createElement('div');
+  notification.className = `notification notification--${type}`;
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideIn 0.3s ease-out reverse';
+    setTimeout(() => {
+      notification.remove();
+    }, 300);
+  }, 3000);
+}
+
+// Экспортируем функцию для использования в других файлах
+window.showNotification = showNotification;
 
 // Export for global access
 window.changePage = changePage;

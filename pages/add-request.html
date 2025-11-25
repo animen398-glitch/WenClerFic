@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Добавить заявку - WenClerFic</title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/add-request.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="has-fixed-header">
+  <!-- Header -->
+  <header class="global-header" data-component="header">
+    <div class="global-header__bar">
+      <a href="/" class="global-header__logo">
+        <span class="global-header__logo-mark">📚</span>
+        <span class="global-header__logo-text">WenClerFic</span>
+      </a>
+      <nav class="global-header__nav" aria-label="Основная навигация">
+        <a class="global-header__link" href="/">Главная</a>
+        <a class="global-header__link" href="/fics">Фанфики</a>
+        <a class="global-header__link" href="/authors">Авторы</a>
+        <a class="global-header__link" href="/popular">Популярное</a>
+        <a class="global-header__link" href="/requests">Заявки</a>
+      </nav>
+      <div class="global-header__controls">
+        <form class="global-header__search" role="search">
+          <input class="global-header__search-input" type="search" placeholder="Поиск по Ficbook" aria-label="Поиск по фанфикам" id="search-input">
+          <button class="global-header__search-btn" type="submit">🔍</button>
+        </form>
+        <div class="avatar-menu" id="avatar-menu">
+          <button class="avatar-menu__trigger" id="avatar-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="avatar-menu__avatar">👤</span>
+            <span class="avatar-menu__name" id="user-name">Войти</span>
+          </button>
+          <div class="avatar-menu__dropdown" id="avatar-dropdown" role="menu" aria-hidden="true">
+            <!-- Меню будет загружено через app.js -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="add-request-page">
+    <div class="container">
+      <h1 class="page-title">Добавить заявку</h1>
+
+      <div class="info-boxes">
+        <div class="info-box info-box--allowed">
+          <h3>Можно добавлять:</h3>
+          <ul>
+            <li>Заявки на написание фанфиков по существующим вселенным</li>
+            <li>Заявки на ориджинальные работы</li>
+            <li>Идеи для сюжетов и персонажей</li>
+          </ul>
+        </div>
+        <div class="info-box info-box--forbidden">
+          <h3>Запрещено добавлять:</h3>
+          <ul>
+            <li>Заявки с нецензурным содержанием</li>
+            <li>Заявки, нарушающие авторские права</li>
+            <li>Спам и реклама</li>
+          </ul>
+        </div>
+      </div>
+
+      <form id="add-request-form" class="request-form">
+        <div class="form-group">
+          <label for="request-title">Короткий заголовок (суть) заявки *</label>
+          <input type="text" id="request-title" class="form-control" required placeholder="Например: Романтика про Гарри и Гермиону">
+        </div>
+
+        <div class="form-group">
+          <label>Тип *</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="request-type" value="original" required>
+              Ориджинал
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="request-type" value="fanfic" required>
+              Фанфик по фэндому
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" id="fandom-group" style="display: none;">
+          <label for="request-fandom">Фэндом *</label>
+          <input type="text" id="request-fandom" class="form-control" placeholder="Введите название фэндома">
+        </div>
+
+        <div class="form-group">
+          <label for="request-description">Большое описание идеи</label>
+          <textarea id="request-description" class="form-control" rows="6" placeholder="Опишите вашу идею подробно"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="request-spoiler">Дополнительное описание для авторов (спойлер)</label>
+          <textarea id="request-spoiler" class="form-control" rows="4" placeholder="Дополнительная информация, которая будет видна только авторам"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Желательно одного из рейтингов *</label>
+          <div class="checkbox-group">
+            <label class="checkbox-label"><input type="checkbox" name="ratings" value="G"> G</label>
+            <label class="checkbox-label"><input type="checkbox" name="ratings" value="PG-13"> PG-13</label>
+            <label class="checkbox-label"><input type="checkbox" name="ratings" value="R"> R</label>
+            <label class="checkbox-label"><input type="checkbox" name="ratings" value="NC-17"> NC-17</label>
+            <label class="checkbox-label"><input type="checkbox" name="ratings" value="NC-21"> NC-21</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Желательно одной из направленностей *</label>
+          <div class="checkbox-group">
+            <label class="checkbox-label"><input type="checkbox" name="directions" value="gen"> Джен</label>
+            <label class="checkbox-label"><input type="checkbox" name="directions" value="het"> Гет</label>
+            <label class="checkbox-label"><input type="checkbox" name="directions" value="slash"> Слэш</label>
+            <label class="checkbox-label"><input type="checkbox" name="directions" value="femslash"> Фемслэш</label>
+            <label class="checkbox-label"><input type="checkbox" name="directions" value="other"> Другие виды отношений</label>
+            <label class="checkbox-label"><input type="checkbox" name="directions" value="mixed"> Смешанная</label>
+            <label class="checkbox-label"><input type="checkbox" name="directions" value="article"> Статья</label>
+            <label class="checkbox-label"><input type="checkbox" name="directions" value="undefined"> Не определено</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Комментарии *</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="comments" value="forbid" required>
+              Запретить
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="comments" value="all" required>
+              Разрешить всем
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="comments" value="registered_month" required>
+              Разрешить зарегистрированным более месяца
+            </label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Добавить</button>
+          <a href="/requests" class="btn btn-outline">Отмена</a>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/add-request.js"></script>
+</body>
+</html>
+

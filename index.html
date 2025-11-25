@@ -44,29 +44,46 @@
           <!-- Меню аватара пользователя -->
           <div class="avatar-menu__dropdown" id="avatar-dropdown" role="menu" aria-hidden="true">
             <div class="avatar-menu__group">
-              <button class="avatar-menu__item">Улучшить аккаунт</button>
+              <!-- УБРАТЬ: "Улучшить аккаунт" -->
               <button class="avatar-menu__item">Мои новости</button>
               <a href="/profile" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Мой профиль</a>
               <button class="avatar-menu__item">Личные сообщения</button>
+              
+              <!-- Кабинет автора с подменю -->
               <div class="avatar-menu__submenu">
-                <span class="avatar-menu__item avatar-menu__item--label">Кабинет</span>
-                <button class="avatar-menu__item" data-role="author">автора</button>
-                <button class="avatar-menu__item" data-role="reader">читателя</button>
-                <button class="avatar-menu__item" data-role="helper">помощника</button>
+                <button class="avatar-menu__item avatar-menu__item--parent" data-submenu="author">
+                  Кабинет автора <span class="arrow">▼</span>
+                </button>
+                <div class="avatar-menu__submenu-items" id="author-submenu" style="display: none;">
+                  <a href="/create" class="avatar-menu__item" style="text-decoration: none; color: inherit;" data-auth-required="true" data-auth-required-tab="register">Добавить фанфик</a>
+                  <a href="/my-fics" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Мои фанфики</a>
+                  <button class="avatar-menu__item">Мой блог</button>
+                  <button class="avatar-menu__item">Отзывы</button>
+                  <a href="/history" class="avatar-menu__item" style="text-decoration: none; color: inherit;">История изменений</a>
+                  <button class="avatar-menu__item">Сообщения об ошибках</button>
+                  <button class="avatar-menu__item">Персональный баннер</button>
+                </div>
               </div>
+              
+              <!-- Кабинет читателя с подменю -->
+              <div class="avatar-menu__submenu">
+                <button class="avatar-menu__item avatar-menu__item--parent" data-submenu="reader">
+                  Кабинет читателя <span class="arrow">▼</span>
+                </button>
+                <div class="avatar-menu__submenu-items" id="reader-submenu" style="display: none;">
+                  <button class="avatar-menu__item">Сборники</button>
+                  <button class="avatar-menu__item">Закладки</button>
+                  <button class="avatar-menu__item">Понравившиеся работы</button>
+                  <button class="avatar-menu__item">Прочитанные работы</button>
+                </div>
+              </div>
+              
+              <!-- Кабинет помощника -->
+              <button class="avatar-menu__item">Кабинет помощника</button>
             </div>
             <div class="avatar-menu__group">
-              <a href="/create" class="avatar-menu__item" style="text-decoration: none; color: inherit;" data-auth-required="true" data-auth-required-tab="register">Добавить фанфик</a>
-              <a href="/my-fics" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Мои фанфики</a>
-              <button class="avatar-menu__item">Мой блог</button>
-              <button class="avatar-menu__item">Отзывы</button>
-              <button class="avatar-menu__item">История изменений</button>
-              <button class="avatar-menu__item">Сообщения об ошибках</button>
-              <button class="avatar-menu__item">Персональный баннер</button>
-            </div>
-            <div class="avatar-menu__group">
-              <button class="avatar-menu__item">Купить монеты</button>
-              <button class="avatar-menu__item">Заявки</button>
+              <!-- УБРАТЬ: "Купить монеты" -->
+              <a href="/requests" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Заявки</a>
               <button class="avatar-menu__item">Связь</button>
               <a href="/profile/settings" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Настройки</a>
               <button class="avatar-menu__item avatar-menu__item--danger" id="logout-btn">Выйти</button>
@@ -79,68 +96,121 @@
 
   <!-- Main Content -->
   <main class="fic-page">
-    <div class="container">
-      <!-- Filters -->
-      <section class="filters-section" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem;">
-        <div class="filters" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-          <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
-            <label style="color: var(--text-secondary); white-space: nowrap;">Жанр:</label>
-            <select id="genre-filter" class="filter-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-primary);">
-              <option value="">Все жанры</option>
-              <option value="romance">Романтика</option>
-              <option value="adventure">Приключения</option>
-              <option value="fantasy">Фэнтези</option>
-              <option value="drama">Драма</option>
-              <option value="horror">Ужасы</option>
-              <option value="comedy">Комедия</option>
-            </select>
+    <div class="container" style="display: flex; gap: 2rem; align-items: flex-start;">
+      <!-- Боковая панель фильтров -->
+      <aside class="filters-sidebar">
+        <div class="filters-section">
+          <h3 class="filters-section__title">Направленности</h3>
+          <div class="filter-item" data-direction="gen">
+            <span>Джен</span>
+            <span class="filter-item__count" id="count-gen">0</span>
           </div>
-
-          <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
-            <label style="color: var(--text-secondary); white-space: nowrap;">Рейтинг:</label>
-            <select id="rating-filter" class="filter-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-primary);">
-              <option value="">Все рейтинги</option>
-              <option value="G">G</option>
-              <option value="PG">PG</option>
-              <option value="PG-13">PG-13</option>
-              <option value="R">R</option>
-              <option value="NC-17">NC-17</option>
-            </select>
+          <div class="filter-item" data-direction="het">
+            <span>Гет</span>
+            <span class="filter-item__count" id="count-het">0</span>
           </div>
-
-          <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
-            <label style="color: var(--text-secondary); white-space: nowrap;">Сортировка:</label>
-            <select id="sort-filter" class="filter-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-primary);">
-              <option value="newest">Новые</option>
-              <option value="popular">Популярные</option>
-              <option value="rating">По рейтингу</option>
-              <option value="views">По просмотрам</option>
-            </select>
+          <div class="filter-item" data-direction="slash">
+            <span>Слэш</span>
+            <span class="filter-item__count" id="count-slash">0</span>
           </div>
-
-          <button class="btn btn-outline" id="apply-filters" style="background: rgba(124, 58, 237, 0.2); border: 1px solid var(--primary-color); color: var(--text-primary); padding: 0.5rem 1.5rem; border-radius: 8px; cursor: pointer; transition: all 0.2s;">Применить</button>
-        </div>
-      </section>
-
-      <!-- Fics Grid -->
-      <section class="fics-section">
-        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-          <h2 class="section-title" style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin: 0;">Популярные фанфики</h2>
-          <div class="view-toggle" style="display: flex; gap: 0.5rem;">
-            <button class="view-btn active" data-view="grid" style="background: rgba(124, 58, 237, 0.2); border: 1px solid var(--primary-color); color: var(--text-primary); padding: 0.5rem; border-radius: 8px; cursor: pointer;">⊞</button>
-            <button class="view-btn" data-view="list" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary); padding: 0.5rem; border-radius: 8px; cursor: pointer;">☰</button>
+          <div class="filter-item" data-direction="femslash">
+            <span>Фемслэш</span>
+            <span class="filter-item__count" id="count-femslash">0</span>
+          </div>
+          <div class="filter-item" data-direction="other">
+            <span>Другие виды отношений</span>
+            <span class="filter-item__count" id="count-other">0</span>
+          </div>
+          <div class="filter-item" data-direction="mixed">
+            <span>Смешанная</span>
+            <span class="filter-item__count" id="count-mixed">0</span>
+          </div>
+          <div class="filter-item" data-direction="article">
+            <span>Статья</span>
+            <span class="filter-item__count" id="count-article">0</span>
+          </div>
+          <div class="filter-item" data-direction="undefined">
+            <span>Не определено</span>
+            <span class="filter-item__count" id="count-undefined">0</span>
           </div>
         </div>
-
-        <div class="fics-grid" id="fics-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
-          <!-- Fics will be loaded here -->
-          <div class="loading-spinner" id="loading-spinner" style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">Загрузка...</div>
+        
+        <div class="filters-section">
+          <h3 class="filters-section__title">Популярные метки</h3>
+          <div id="popular-tags">
+            <!-- Теги будут загружены динамически -->
+            <div class="filter-item">
+              <span>Романтика</span>
+              <span class="filter-item__count">0</span>
+            </div>
+          </div>
         </div>
+      </aside>
 
-        <div class="pagination" id="pagination" style="margin-top: 2rem; display: flex; justify-content: center; gap: 0.5rem;">
-          <!-- Pagination will be generated here -->
-        </div>
-      </section>
+      <!-- Основной контент -->
+      <div style="flex: 1;">
+        <!-- Filters -->
+        <section class="filters-section" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem;">
+          <div class="filters" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+            <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
+              <label style="color: var(--text-secondary); white-space: nowrap;">Жанр:</label>
+              <select id="genre-filter" class="filter-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-primary);">
+                <option value="">Все жанры</option>
+                <option value="romance">Романтика</option>
+                <option value="adventure">Приключения</option>
+                <option value="fantasy">Фэнтези</option>
+                <option value="drama">Драма</option>
+                <option value="horror">Ужасы</option>
+                <option value="comedy">Комедия</option>
+              </select>
+            </div>
+
+            <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
+              <label style="color: var(--text-secondary); white-space: nowrap;">Рейтинг:</label>
+              <select id="rating-filter" class="filter-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-primary);">
+                <option value="">Все рейтинги</option>
+                <option value="G">G</option>
+                <option value="PG">PG</option>
+                <option value="PG-13">PG-13</option>
+                <option value="R">R</option>
+                <option value="NC-17">NC-17</option>
+              </select>
+            </div>
+
+            <div class="filter-group" style="display: flex; align-items: center; gap: 0.5rem;">
+              <label style="color: var(--text-secondary); white-space: nowrap;">Сортировка:</label>
+              <select id="sort-filter" class="filter-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-primary);">
+                <option value="newest">Новые</option>
+                <option value="popular">Популярные</option>
+                <option value="rating">По рейтингу</option>
+                <option value="views">По просмотрам</option>
+              </select>
+            </div>
+
+            <button class="btn btn-outline" id="apply-filters" style="background: rgba(124, 58, 237, 0.2); border: 1px solid var(--primary-color); color: var(--text-primary); padding: 0.5rem 1.5rem; border-radius: 8px; cursor: pointer; transition: all 0.2s;">Применить</button>
+          </div>
+        </section>
+
+        <!-- Fics Grid -->
+        <section class="fics-section">
+          <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 class="section-title" style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary); margin: 0;">Популярные фанфики</h2>
+            <div class="view-toggle" style="display: flex; gap: 0.5rem;">
+              <button class="view-btn active" data-view="grid" style="background: rgba(124, 58, 237, 0.2); border: 1px solid var(--primary-color); color: var(--text-primary); padding: 0.5rem; border-radius: 8px; cursor: pointer;">⊞</button>
+              <button class="view-btn" data-view="list" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary); padding: 0.5rem; border-radius: 8px; cursor: pointer;">☰</button>
+            </div>
+          </div>
+
+          <div class="fics-grid" id="fics-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+            <!-- Fics will be loaded here -->
+            <div class="loading-spinner" id="loading-spinner" style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">Загрузка...</div>
+          </div>
+
+          <div class="pagination" id="pagination" style="margin-top: 2rem; display: flex; justify-content: center; gap: 0.5rem;">
+            <!-- Pagination will be generated here -->
+          </div>
+        </section>
+      </div>
     </div>
   </main>
 
@@ -187,21 +257,28 @@
         <div class="auth-tab-content">
           <!-- Login Form -->
           <div role="tabpanel" class="auth-tab-pane active" id="login-section">
+            <h2 style="margin-bottom: 1.5rem; color: var(--text-primary); font-size: 1.5rem; font-weight: 600;">Вход</h2>
             <form id="login-form" class="auth-form-horizontal">
               <div class="form-group">
-                <label for="login-email">Email</label>
-                <input type="email" class="form-control" id="login-email" placeholder="Введите email" required>
+                <label for="login-email">Логин (или Email)</label>
+                <input type="text" class="form-control" id="login-email" placeholder="Введите логин или email" required>
               </div>
               <div class="form-group">
                 <label for="login-password">Пароль</label>
-                <input type="password" class="form-control" id="login-password" placeholder="Введите пароль" required>
+                <div style="position: relative;">
+                  <input type="password" class="form-control" id="login-password" placeholder="Введите пароль" required>
+                  <button type="button" class="password-toggle" id="login-password-toggle" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.2rem;">👁️</button>
+                </div>
               </div>
-              <div class="form-group">
+              <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
                 <div class="main-checkbox">
                   <input value="remember" id="remember-me" name="remember" type="checkbox">
                   <label for="remember-me"></label>
                 </div>
                 <span class="checkbox-text">Запомнить меня</span>
+              </div>
+              <div class="form-group">
+                <a href="#" style="color: var(--primary-color); text-decoration: none; font-size: 0.9rem;">Забыли пароль?</a>
               </div>
               <div class="form-group">
                 <button type="submit" class="btn btn-auth-submit">Войти</button>
@@ -233,22 +310,36 @@
           
           <!-- Register Form -->
           <div role="tabpanel" class="auth-tab-pane" id="register-section">
+            <h2 style="margin-bottom: 1.5rem; color: var(--text-primary); font-size: 1.5rem; font-weight: 600;">Регистрация через email</h2>
             <form id="register-form" class="auth-form-horizontal">
               <div class="form-group">
-                <label for="register-username">Имя пользователя</label>
-                <input type="text" class="form-control" id="register-username" placeholder="Введите имя пользователя" required>
-              </div>
-              <div class="form-group">
-                <label for="register-email">Email</label>
+                <label for="register-email">Email *</label>
                 <input type="email" class="form-control" id="register-email" placeholder="Введите email" required>
               </div>
               <div class="form-group">
-                <label for="register-password">Пароль</label>
-                <input type="password" class="form-control" id="register-password" placeholder="Введите пароль" required>
+                <label for="register-username">Имя пользователя *</label>
+                <input type="text" class="form-control" id="register-username" placeholder="Введите имя пользователя" required>
+                <small style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                  Можно: латинские или русские буквы, цифры, символы (дефис - нижнее подчёркивание _ точка . и пробел).<br>
+                  Нельзя: нецензурная лексика, одновременно латинские и русские буквы.
+                </small>
               </div>
               <div class="form-group">
-                <label for="register-password-confirm">Подтвердите пароль</label>
-                <input type="password" class="form-control" id="register-password-confirm" placeholder="Подтвердите пароль" required>
+                <label for="register-password">Пароль *</label>
+                <div style="position: relative;">
+                  <input type="password" class="form-control" id="register-password" placeholder="Введите пароль" required>
+                  <button type="button" class="password-toggle" id="register-password-toggle" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.2rem;">👁️</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <div style="display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+                  <input type="checkbox" id="register-agree" required style="margin-top: 0.25rem;">
+                  <label for="register-agree" style="cursor: pointer;">
+                    Я согласен с <a href="/rules" style="color: var(--primary-color);">Правилами сайта</a>, 
+                    <a href="/terms" style="color: var(--primary-color);">Пользовательским соглашением</a> и 
+                    <a href="/privacy" style="color: var(--primary-color);">Политикой обработки персональных данных</a>
+                  </label>
+                </div>
               </div>
               <div class="form-group">
                 <button type="submit" class="btn btn-auth-submit">Зарегистрироваться</button>

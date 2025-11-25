@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>История изменений - WenClerFic</title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/history.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="has-fixed-header">
+  <!-- Header -->
+  <header class="global-header" data-component="header">
+    <div class="global-header__bar">
+      <a href="/" class="global-header__logo">
+        <span class="global-header__logo-mark">📚</span>
+        <span class="global-header__logo-text">WenClerFic</span>
+      </a>
+      <nav class="global-header__nav" aria-label="Основная навигация">
+        <a class="global-header__link" href="/">Главная</a>
+        <a class="global-header__link" href="/fics">Фанфики</a>
+        <a class="global-header__link" href="/authors">Авторы</a>
+        <a class="global-header__link" href="/popular">Популярное</a>
+        <a class="global-header__link" href="/requests">Заявки</a>
+      </nav>
+      <div class="global-header__controls">
+        <form class="global-header__search" role="search">
+          <input class="global-header__search-input" type="search" placeholder="Поиск по Ficbook" aria-label="Поиск по фанфикам" id="search-input">
+          <button class="global-header__search-btn" type="submit">🔍</button>
+        </form>
+        <div class="avatar-menu" id="avatar-menu">
+          <button class="avatar-menu__trigger" id="avatar-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="avatar-menu__avatar">👤</span>
+            <span class="avatar-menu__name" id="user-name">Войти</span>
+          </button>
+          <div class="avatar-menu__dropdown" id="avatar-dropdown" role="menu" aria-hidden="true">
+            <!-- Меню будет загружено через app.js -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="history-page">
+    <div class="container" style="display: flex; gap: 2rem;">
+      <!-- Sidebar -->
+      <aside class="history-sidebar">
+        <nav class="sidebar-nav">
+          <a href="/my-fics" class="nav-item">Мои фанфики</a>
+          <a href="/blog" class="nav-item">Мой блог</a>
+          <a href="/reviews" class="nav-item">Отзывы</a>
+          <a href="/history" class="nav-item active">История изменений</a>
+          <a href="/error-reports" class="nav-item">Сообщения об ошибках</a>
+          <a href="/profile/banner" class="nav-item">Персональный баннер</a>
+          <div class="nav-group">
+            <div class="nav-item nav-item--parent">Кабинет читателя</div>
+            <div class="nav-submenu">
+              <a href="/collections" class="nav-item">Сборники</a>
+              <a href="/bookmarks" class="nav-item">Закладки</a>
+            </div>
+          </div>
+          <a href="/discussions" class="nav-item">Обсуждения</a>
+          <a href="/subscriptions" class="nav-item">Подписки на авторов</a>
+          <a href="/liked" class="nav-item">Понравившиеся работы</a>
+          <a href="/read" class="nav-item">Прочитанные работы</a>
+          <a href="/subscription-history" class="nav-item">История подписок</a>
+          <a href="/viewed" class="nav-item">Просмотренные работы</a>
+          <a href="/feeds" class="nav-item">Мои ленты</a>
+          <div class="nav-group">
+            <div class="nav-item nav-item--parent">Кабинет помощника</div>
+            <div class="nav-submenu">
+              <!-- Подменю помощника -->
+            </div>
+          </div>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <div style="flex: 1;">
+        <div class="history-tabs">
+          <button class="tab-btn active" data-tab="my-texts">Мои тексты</button>
+          <button class="tab-btn" data-tab="beta">Бета/Соавтор/Гамма</button>
+        </div>
+
+        <h1 class="page-title">История изменений ваших текстов</h1>
+        <p class="page-description">Здесь отображается история всех изменений ваших текстов.</p>
+
+        <div class="history-list" id="history-list">
+          <div class="loading-spinner">Загрузка истории...</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/history.js"></script>
+</body>
+</html>
+

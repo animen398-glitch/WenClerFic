@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Расширенный поиск - WenClerFic</title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/search.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="has-fixed-header">
+  <!-- Header -->
+  <header class="global-header" data-component="header">
+    <div class="global-header__bar">
+      <a href="/" class="global-header__logo">
+        <span class="global-header__logo-mark">📚</span>
+        <span class="global-header__logo-text">WenClerFic</span>
+      </a>
+      <nav class="global-header__nav" aria-label="Основная навигация">
+        <a class="global-header__link" href="/">Главная</a>
+        <a class="global-header__link" href="/fics">Фанфики</a>
+        <a class="global-header__link" href="/authors">Авторы</a>
+        <a class="global-header__link" href="/popular">Популярное</a>
+        <a class="global-header__link" href="/requests">Заявки</a>
+      </nav>
+      <div class="global-header__controls">
+        <form class="global-header__search" role="search">
+          <input class="global-header__search-input" type="search" placeholder="Поиск по Ficbook" aria-label="Поиск по фанфикам" id="search-input">
+          <button class="global-header__search-btn" type="submit">🔍</button>
+        </form>
+        <div class="avatar-menu" id="avatar-menu">
+          <button class="avatar-menu__trigger" id="avatar-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="avatar-menu__avatar">👤</span>
+            <span class="avatar-menu__name" id="user-name">Войти</span>
+          </button>
+          <div class="avatar-menu__dropdown" id="avatar-dropdown" role="menu" aria-hidden="true">
+            <!-- Меню будет загружено через app.js -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="search-page">
+    <div class="container" style="display: flex; gap: 2rem;">
+      <!-- Sidebar Filters -->
+      <aside class="search-sidebar">
+        <h1 class="page-title">Расширенный поиск фанфиков</h1>
+        <p class="page-description">Настройте желаемые параметры для поиска подходящих фанфиков.</p>
+        
+        <div class="search-controls">
+          <button class="control-link" id="collapse-all">Свернуть все</button>
+          <span>|</span>
+          <button class="control-link" id="expand-all">Развернуть все</button>
+          <span>|</span>
+          <button class="control-link" id="reset-all">Сбросить все</button>
+        </div>
+
+        <div class="filters-section">
+          <h3 class="filters-section__title">Тип работы</h3>
+          <label class="filter-checkbox"><input type="checkbox" data-filter="type" value="original"> Ориджиналы</label>
+          <label class="filter-checkbox"><input type="checkbox" data-filter="type" value="fanfic"> Фанфики</label>
+        </div>
+
+        <div class="filters-section">
+          <h3 class="filters-section__title">Дополнительно</h3>
+          <label class="filter-checkbox"><input type="checkbox" data-filter="unread"> Непрочитанные</label>
+          <label class="filter-checkbox"><input type="checkbox" data-filter="read"> Прочитанные</label>
+          <label class="filter-checkbox"><input type="checkbox" data-filter="by-request"> Написанные по заявкам</label>
+          <label class="filter-checkbox"><input type="checkbox" data-filter="hot"> «Горячие работы»</label>
+        </div>
+
+        <div class="filters-section collapsible">
+          <h3 class="filters-section__title">Фэндомы</h3>
+          <input type="text" class="filter-input" placeholder="Поиск фэндома" id="fandom-search">
+        </div>
+
+        <div class="filters-section collapsible">
+          <h3 class="filters-section__title">Пэйринги</h3>
+          <input type="text" class="filter-input" placeholder="Поиск пэйринга" id="pairing-search">
+        </div>
+
+        <div class="filters-section collapsible">
+          <h3 class="filters-section__title">Статус/размер</h3>
+          <select class="filter-select" id="status-filter">
+            <option value="">Все</option>
+            <option value="ongoing">В процессе</option>
+            <option value="completed">Завершено</option>
+          </select>
+        </div>
+
+        <div class="filters-section collapsible">
+          <h3 class="filters-section__title">Популярность работы</h3>
+          <select class="filter-select" id="popularity-filter">
+            <option value="">Все</option>
+            <option value="high">Высокая</option>
+            <option value="medium">Средняя</option>
+            <option value="low">Низкая</option>
+          </select>
+        </div>
+
+        <div class="filters-section collapsible">
+          <h3 class="filters-section__title">Направленность</h3>
+          <label class="filter-checkbox"><input type="checkbox" data-filter="direction" value="gen"> Джен</label>
+          <label class="filter-checkbox"><input type="checkbox" data-filter="direction" value="het"> Гет</label>
+          <label class="filter-checkbox"><input type="checkbox" data-filter="direction" value="slash"> Слэш</label>
+          <label class="filter-checkbox"><input type="checkbox" data-filter="direction" value="femslash"> Фемслэш</label>
+        </div>
+      </aside>
+
+      <!-- Results -->
+      <div style="flex: 1;">
+        <div class="search-results" id="search-results">
+          <div class="loading-spinner">Начните поиск...</div>
+        </div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/search.js"></script>
+</body>
+</html>
+

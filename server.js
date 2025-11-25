@@ -42,7 +42,8 @@ function getCookieOptions(maxAge = SESSION_DEFAULT_TTL) {
     httpOnly: true,
     secure: IS_PRODUCTION,
     sameSite: 'lax',
-    maxAge
+    maxAge,
+    path: '/' // Важно: установить путь
   };
 }
 
@@ -297,6 +298,7 @@ app.get('/api/auth/session', async (req, res) => {
     });
   } catch (error) {
     console.error('Session error:', error);
+    // Не показывать ошибки "invalid" пользователю, логировать в консоль
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -1152,6 +1154,30 @@ app.get('/my-fics', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'my-fics.html'));
 });
 
+app.get('/authors', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'authors.html'));
+});
+
+app.get('/popular', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'popular.html'));
+});
+
+app.get('/requests', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'requests.html'));
+});
+
+app.get('/add-request', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'add-request.html'));
+});
+
+app.get('/history', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'history.html'));
+});
+
+app.get('/search', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'search.html'));
+});
+
 app.get('/fic/:id/addpart', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'add-chapter.html'));
 });
@@ -1267,6 +1293,170 @@ app.get('/api/users/:id/fics', async (req, res) => {
     res.json(ficsWithAuthors);
   } catch (error) {
     console.error('Error loading user fics:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// User's own fics
+app.get('/api/user/fics', async (req, res) => {
+  try {
+    const token = extractToken(req);
+    const user = await getUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ error: 'Не авторизован' });
+    }
+
+    const userFics = await db.getUserFics(user.id);
+    res.json(userFics);
+  } catch (error) {
+    console.error('Error loading user fics:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// Authors API
+app.get('/api/authors', async (req, res) => {
+  try {
+    const period = req.query.period || 'week';
+    const search = req.query.search || '';
+    
+    // Get all users with fic count
+    const allUsers = await db.getAllUsers();
+    const authorsWithStats = await Promise.all(allUsers.map(async (user) => {
+      const fics = await db.getUserFics(user.id);
+      return {
+        id: user.id,
+        username: user.username,
+        avatar: user.avatar,
+        subscribers: 0, // TODO: implement subscribers
+        isPremium: false, // TODO: implement premium
+        ficsCount: fics.length
+      };
+    }));
+
+    // Filter by search
+    let filtered = authorsWithStats;
+    if (search) {
+      filtered = filtered.filter(author => 
+        author.username.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // Sort by period
+    if (period === 'week') {
+      // TODO: sort by activity in last week
+      filtered.sort((a, b) => b.ficsCount - a.ficsCount);
+    } else {
+      filtered.sort((a, b) => b.ficsCount - a.ficsCount);
+    }
+
+    res.json({ authors: filtered });
+  } catch (error) {
+    console.error('Error loading authors:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// Requests API
+app.get('/api/requests', async (req, res) => {
+  try {
+    const tab = req.query.tab || 'all';
+    const page = parseInt(req.query.page) || 1;
+    const perPage = 20;
+
+    // TODO: implement requests table queries
+    const requests = [];
+    const totalPages = 1;
+
+    res.json({
+      requests,
+      totalPages,
+      currentPage: page
+    });
+  } catch (error) {
+    console.error('Error loading requests:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+app.post('/api/requests', async (req, res) => {
+  try {
+    const token = extractToken(req);
+    const user = await getUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ error: 'Не авторизован' });
+    }
+
+    const { title, type, fandom, description, spoilerDescription, ratings, directions, commentsAllowed } = req.body;
+
+    if (!title || !type) {
+      return res.status(400).json({ error: 'Заголовок и тип обязательны' });
+    }
+
+    // TODO: implement request creation
+    const newRequest = {
+      id: Date.now(),
+      userId: user.id,
+      title,
+      type,
+      fandom,
+      description,
+      spoilerDescription,
+      ratings: JSON.stringify(ratings || []),
+      directions: JSON.stringify(directions || []),
+      commentsAllowed,
+      isHot: false,
+      likes: 0,
+      favorites: 0,
+      comments: 0,
+      createdAt: new Date().toISOString()
+    };
+
+    res.status(201).json(newRequest);
+  } catch (error) {
+    console.error('Error creating request:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// Search API
+app.get('/api/fics/search', async (req, res) => {
+  try {
+    const filters = {
+      type: req.query.type,
+      genre: req.query.genre,
+      rating: req.query.rating,
+      status: req.query.status,
+      sort: req.query.sort || 'newest'
+    };
+
+    let allFics = await db.getAllFics(filters);
+
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const perPage = 12;
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+
+    const paginatedFics = allFics.slice(start, end);
+
+    // Add author info
+    const ficsWithAuthors = await Promise.all(paginatedFics.map(async (fic) => {
+      const author = await db.getUserById(fic.authorId);
+      return {
+        ...fic,
+        author: author ? { username: author.username, id: author.id } : { username: 'Unknown', id: fic.authorId }
+      };
+    }));
+
+    res.json({
+      fics: ficsWithAuthors,
+      total: allFics.length,
+      totalPages: Math.ceil(allFics.length / perPage),
+      currentPage: page
+    });
+  } catch (error) {
+    console.error('Error searching fics:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
