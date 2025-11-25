@@ -1,3 +1,9 @@
+import {
+  syncSessionWithServer,
+  getStoredUser,
+  onAuthChange
+} from './session.js';
+
 // API Configuration - автоматически определяет базовый URL
 const API_BASE = window.location.origin + '/api';
 
@@ -10,8 +16,8 @@ let currentChapter = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   // Ждем загрузки app.js для инициализации модального окна
-  setTimeout(() => {
-    checkAuth();
+  setTimeout(async () => {
+    await checkAuth();
     getIdsFromUrl();
     if (ficId) {
       loadFic();
@@ -23,22 +29,44 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 100);
 });
 
-function checkAuth() {
-  const user = localStorage.getItem('user');
+onAuthChange((event) => {
+  currentUser = event.detail?.user || null;
+  if (currentUser) {
+    updateUserUI();
+    unlockChapterForm();
+  } else {
+    showLoginPrompt();
+  }
+});
+
+async function checkAuth() {
+  const user = getStoredUser();
   const token = localStorage.getItem('token');
   
   if (user && token) {
-    try {
-      currentUser = JSON.parse(user);
-      updateUserUI();
-    } catch (e) {
-      console.error('Error parsing user data:', e);
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      showLoginPrompt();
-    }
+    currentUser = user;
+    updateUserUI();
   } else {
     showLoginPrompt();
+  }
+
+  const session = await syncSessionWithServer();
+  if (session?.user && session?.token) {
+    currentUser = session.user;
+    updateUserUI();
+    unlockChapterForm();
+  }
+}
+
+function unlockChapterForm() {
+  const prompt = document.getElementById('login-prompt');
+  if (prompt) {
+    prompt.remove();
+  }
+  const form = document.getElementById('add-chapter-form');
+  if (form) {
+    form.style.opacity = '1';
+    form.style.pointerEvents = 'auto';
   }
 }
 

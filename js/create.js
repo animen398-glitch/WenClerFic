@@ -1,3 +1,9 @@
+import {
+  syncSessionWithServer,
+  getStoredUser,
+  onAuthChange
+} from './session.js';
+
 // API Configuration - автоматически определяет базовый URL
 const API_BASE = window.location.origin + '/api';
 
@@ -5,31 +11,51 @@ let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   // Ждем загрузки app.js для инициализации модального окна
-  setTimeout(() => {
-    checkAuth();
+  setTimeout(async () => {
+    await checkAuth();
     setupEventListeners();
     setupCharCounter();
   }, 100);
 });
 
-function checkAuth() {
-  const user = localStorage.getItem('user');
+onAuthChange((event) => {
+  currentUser = event.detail?.user || null;
+  if (currentUser) {
+    updateUserUI();
+    unlockCreateForm();
+  } else {
+    showLoginPrompt();
+  }
+});
+
+async function checkAuth() {
+  const storedUser = getStoredUser();
   const token = localStorage.getItem('token');
   
-  if (user && token) {
-    try {
-      currentUser = JSON.parse(user);
-      updateUserUI();
-    } catch (e) {
-      console.error('Error parsing user data:', e);
-      // Очищаем поврежденные данные
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-    }
+  if (storedUser && token) {
+    currentUser = storedUser;
+    updateUserUI();
   } else {
-    // Не редиректим, просто показываем, что нужно войти
-    // Пользователь сможет войти через модальное окно
     showLoginPrompt();
+  }
+
+  const session = await syncSessionWithServer();
+  if (session?.user && session?.token) {
+    currentUser = session.user;
+    updateUserUI();
+    unlockCreateForm();
+  }
+}
+
+function unlockCreateForm() {
+  const prompt = document.getElementById('login-prompt');
+  if (prompt) {
+    prompt.remove();
+  }
+  const form = document.getElementById('create-fic-form');
+  if (form) {
+    form.style.opacity = '1';
+    form.style.pointerEvents = 'auto';
   }
 }
 

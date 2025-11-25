@@ -1,3 +1,10 @@
+import {
+  syncSessionWithServer,
+  getStoredUser,
+  saveSessionData,
+  clearSessionData
+} from './session.js';
+
 // API Configuration - автоматически определяет базовый URL
 const API_BASE = window.location.origin + '/api';
 
@@ -21,16 +28,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function init() {
-  checkAuth();
+  await checkAuth();
   setupEventListeners();
   await loadFics();
 }
 
 // Authentication
-function checkAuth() {
-  const user = localStorage.getItem('user');
-  if (user) {
-    state.currentUser = JSON.parse(user);
+async function checkAuth() {
+  const cachedUser = getStoredUser();
+  if (cachedUser) {
+    state.currentUser = cachedUser;
+    updateUserUI();
+  }
+
+  const session = await syncSessionWithServer();
+  if (session?.user) {
+    state.currentUser = session.user;
+    updateUserUI();
+  } else if (!cachedUser) {
+    state.currentUser = null;
     updateUserUI();
   }
 }
@@ -181,21 +197,21 @@ async function handleLogin(e) {
     const response = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      credentials: 'include',
+      body: JSON.stringify({ email, password, rememberMe })
     });
 
     const data = await response.json();
     
     if (response.ok) {
       state.currentUser = data.user;
-      localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
-      if (rememberMe) {
-        localStorage.setItem('rememberMe', 'true');
-      }
+      saveSessionData(data.user, data.token);
       updateUserUI();
-      document.getElementById('auth-modal').style.display = 'none';
-      loginForm.reset();
+      const authModal = document.getElementById('auth-modal');
+      if (authModal) {
+        authModal.style.display = 'none';
+      }
+      document.getElementById('login-form')?.reset();
       
       // Обновляем UI на страницах создания/добавления глав
       if (window.onAuthSuccess) {
@@ -231,18 +247,21 @@ async function handleRegister(e) {
     const response = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password })
+      credentials: 'include',
+      body: JSON.stringify({ username, email, password, rememberMe: true })
     });
 
     const data = await response.json();
     
     if (response.ok) {
       state.currentUser = data.user;
-      localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
+      saveSessionData(data.user, data.token);
       updateUserUI();
-      document.getElementById('auth-modal').style.display = 'none';
-      registerForm.reset();
+      const authModal = document.getElementById('auth-modal');
+      if (authModal) {
+        authModal.style.display = 'none';
+      }
+      document.getElementById('register-form')?.reset();
       alert('Регистрация успешна! Добро пожаловать!');
       
       // Обновляем UI на страницах создания/добавления глав
@@ -258,16 +277,30 @@ async function handleRegister(e) {
   }
 }
 
-function logout() {
-  state.currentUser = null;
-  localStorage.removeItem('user');
-  localStorage.removeItem('token');
-  updateUserUI();
+async function logout() {
+  try {
+    await fetch(`${API_BASE}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.warn('Logout request failed:', error);
+  } finally {
+    state.currentUser = null;
+    clearSessionData();
+    updateUserUI();
+  }
 }
 
 // Load Fics
 async function loadFics() {
   const spinner = document.getElementById('loading-spinner');
+  const grid = document.getElementById('fics-grid');
+
+  if (!spinner || !grid) {
+    return;
+  }
+
   spinner.style.display = 'block';
 
   try {
@@ -297,7 +330,13 @@ async function loadFics() {
 
 function renderFics() {
   const grid = document.getElementById('fics-grid');
+  if (!grid) {
+    return;
+  }
   const gridContainer = grid.parentElement;
+  if (!gridContainer) {
+    return;
+  }
   
   if (state.viewMode === 'list') {
     grid.classList.add('list-view');
@@ -456,27 +495,38 @@ async function handleOAuth(provider, action) {
       const checkPopup = setInterval(() => {
         if (popup.closed) {
           clearInterval(checkPopup);
-          // Check if user is logged in
           checkAuth();
         }
       }, 1000);
 
-      // Listen for message from popup
-      window.addEventListener('message', (event) => {
+      const handleOAuthMessage = (event) => {
+        if (!event.data?.type) return;
+
         if (event.data.type === 'oauth-success') {
-          state.currentUser = event.data.user;
-          localStorage.setItem('user', JSON.stringify(event.data.user));
-          localStorage.setItem('token', event.data.token);
-          updateUserUI();
-          document.getElementById('auth-modal').style.display = 'none';
-          popup.close();
-          
-          // Обновляем UI на страницах создания/добавления глав
-          if (window.onAuthSuccess) {
-            window.onAuthSuccess();
+          if (event.data.user && event.data.token) {
+            saveSessionData(event.data.user, event.data.token);
+            state.currentUser = event.data.user;
+            updateUserUI();
+            document.getElementById('auth-modal')?.style.display = 'none';
+            
+            if (window.onAuthSuccess) {
+              window.onAuthSuccess();
+            }
           }
+          popup?.close();
+          clearInterval(checkPopup);
+          window.removeEventListener('message', handleOAuthMessage);
         }
-      });
+
+        if (event.data.type === 'oauth-error') {
+          alert(event.data.error || 'Ошибка OAuth');
+          popup?.close();
+          clearInterval(checkPopup);
+          window.removeEventListener('message', handleOAuthMessage);
+        }
+      };
+
+      window.addEventListener('message', handleOAuthMessage);
     } else {
       // Fallback: direct redirect for development
       window.location.href = `${API_BASE}/auth/${provider}?action=${action}`;
@@ -489,4 +539,9 @@ async function handleOAuth(provider, action) {
 
 // Export for global access
 window.changePage = changePage;
+
+document.addEventListener('wenclerfic:auth-changed', (event) => {
+  state.currentUser = event.detail?.user || null;
+  updateUserUI();
+});
 

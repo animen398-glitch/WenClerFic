@@ -4,11 +4,72 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs').promises;
+const crypto = require('crypto');
+const cookieParser = require('cookie-parser');
 const db = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const SESSION_COOKIE_NAME = 'wenclerfic_session';
+const SESSION_DEFAULT_TTL = 1000 * 60 * 60 * 24 * 7; // 7 days
+const SESSION_REMEMBER_TTL = 1000 * 60 * 60 * 24 * 30; // 30 days
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()).filter(Boolean)
+  : null;
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || !allowedOrigins) {
+      callback(null, true);
+      return;
+    }
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+};
+
+function getCookieOptions(maxAge = SESSION_DEFAULT_TTL) {
+  return {
+    httpOnly: true,
+    secure: IS_PRODUCTION,
+    sameSite: 'lax',
+    maxAge
+  };
+}
+
+async function createSessionForUser(res, userId, rememberMe = false) {
+  const ttl = rememberMe ? SESSION_REMEMBER_TTL : SESSION_DEFAULT_TTL;
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + ttl).toISOString();
+  await db.createSession({ userId, token, expiresAt });
+  res.cookie(SESSION_COOKIE_NAME, token, getCookieOptions(ttl));
+  return token;
+}
+
+async function destroySession(res, token) {
+  if (token) {
+    try {
+      await db.deleteSessionByToken(token);
+    } catch (error) {
+      console.error('Ошибка удаления сессии:', error);
+    }
+  }
+
+  res.clearCookie(SESSION_COOKIE_NAME, {
+    httpOnly: true,
+    secure: IS_PRODUCTION,
+    sameSite: 'lax'
+  });
+}
+
+function extractToken(req) {
+  return req.headers.authorization?.replace('Bearer ', '') || req.cookies?.[SESSION_COOKIE_NAME];
+}
 
 // OAuth configuration
 const OAUTH_CONFIG = {
@@ -25,7 +86,8 @@ const OAUTH_CONFIG = {
 };
 
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
@@ -53,7 +115,8 @@ if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
 // Auth Routes
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, rememberMe } = req.body;
+    const rememberSession = rememberMe !== undefined ? Boolean(rememberMe) : true;
 
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Все поля обязательны' });
@@ -77,7 +140,7 @@ app.post('/api/auth/register', async (req, res) => {
     });
 
     const { password: _, ...userWithoutPassword } = newUser;
-    const token = `token_${newUser.id}_${Date.now()}`;
+    const token = await createSessionForUser(res, newUser.id, rememberSession);
 
     res.json({
       user: userWithoutPassword,
@@ -91,7 +154,8 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
+    const rememberSession = rememberMe !== undefined ? Boolean(rememberMe) : false;
 
     const user = await db.getUserByEmail(email);
 
@@ -100,7 +164,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const { password: _, ...userWithoutPassword } = user;
-    const token = `token_${user.id}_${Date.now()}`;
+    const token = await createSessionForUser(res, user.id, rememberSession);
 
     res.json({
       user: userWithoutPassword,
@@ -108,6 +172,41 @@ app.post('/api/auth/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+app.get('/api/auth/session', async (req, res) => {
+  try {
+    const token = extractToken(req);
+    if (!token) {
+      return res.status(401).json({ error: 'Сессия не найдена' });
+    }
+
+    const user = await getUserFromToken(token);
+    if (!user) {
+      await destroySession(res, token);
+      return res.status(401).json({ error: 'Сессия недействительна' });
+    }
+
+    const { password: _, ...userWithoutPassword } = user;
+    res.json({
+      user: userWithoutPassword,
+      token
+    });
+  } catch (error) {
+    console.error('Session error:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+app.post('/api/auth/logout', async (req, res) => {
+  try {
+    const token = extractToken(req);
+    await destroySession(res, token);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Logout error:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -208,7 +307,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
     }
 
     const { password: _, ...userWithoutPassword } = user;
-    const token = `token_${user.id}_${Date.now()}`;
+    const token = await createSessionForUser(res, user.id, true);
 
     res.send(`
       <script>
@@ -251,7 +350,7 @@ app.get('/api/auth/facebook/callback', async (req, res) => {
     }
 
     const { password: _, ...userWithoutPassword } = user;
-    const token = `token_${user.id}_${Date.now()}`;
+    const token = await createSessionForUser(res, user.id, true);
 
     res.send(`
       <script>
@@ -333,7 +432,21 @@ app.get('/api/fics/:id', async (req, res) => {
 // Helper function to get user from token
 async function getUserFromToken(token) {
   if (!token) return null;
-  // Simple token parsing - in production use JWT
+  try {
+    const session = await db.getSessionByToken(token);
+    if (session) {
+      const expiresAt = new Date(session.expiresAt).getTime();
+      if (Number.isFinite(expiresAt) && expiresAt <= Date.now()) {
+        await db.deleteSessionByToken(token);
+        return null;
+      }
+      return await db.getUserById(session.userId);
+    }
+  } catch (error) {
+    console.error('Ошибка проверки сессии:', error);
+  }
+
+  // Legacy tokens (оставляем для обратной совместимости)
   const match = token.match(/token_(\d+)_/);
   if (match) {
     const userId = parseInt(match[1]);
@@ -736,6 +849,40 @@ app.get('/api/users/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading user:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+app.patch('/api/users/me', async (req, res) => {
+  try {
+    const token = extractToken(req);
+    if (!token) {
+      return res.status(401).json({ error: 'Не авторизован' });
+    }
+
+    const currentUser = await getUserFromToken(token);
+    if (!currentUser) {
+      return res.status(401).json({ error: 'Неверный токен' });
+    }
+
+    const { username } = req.body;
+    const newUsername = username?.trim();
+
+    if (!newUsername || newUsername.length < 3) {
+      return res.status(400).json({ error: 'Имя пользователя должно содержать минимум 3 символа' });
+    }
+
+    const existingUser = await db.getUserByUsername(newUsername);
+    if (existingUser && existingUser.id !== currentUser.id) {
+      return res.status(400).json({ error: 'Имя пользователя уже занято' });
+    }
+
+    const updatedUser = await db.updateUser(currentUser.id, { username: newUsername });
+    const { password: _, ...userWithoutPassword } = updatedUser;
+
+    res.json({ user: userWithoutPassword });
+  } catch (error) {
+    console.error('Error updating profile:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });

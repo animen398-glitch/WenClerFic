@@ -1,18 +1,35 @@
+import {
+  syncSessionWithServer,
+  getStoredUser,
+  onAuthChange
+} from './session.js';
+
 // API Configuration - автоматически определяет базовый URL
 const API_BASE = window.location.origin + '/api';
 
 let currentUser = null;
 let profileUserId = null;
 
-document.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
+onAuthChange((event) => {
+  currentUser = event.detail?.user || null;
+  updateUserUI();
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await checkAuth();
   loadProfile();
 });
 
-function checkAuth() {
-  const user = localStorage.getItem('user');
-  if (user) {
-    currentUser = JSON.parse(user);
+async function checkAuth() {
+  const cached = getStoredUser();
+  if (cached) {
+    currentUser = cached;
+    updateUserUI();
+  }
+
+  const session = await syncSessionWithServer();
+  if (session?.user) {
+    currentUser = session.user;
     updateUserUI();
   }
 }
@@ -95,9 +112,11 @@ function renderProfile(user) {
   const isOwnProfile = currentUser && user.id === currentUser.id;
   if (isOwnProfile) {
     profileActions.innerHTML = `
+      <button id="edit-nickname-btn" class="btn btn-outline" style="background: rgba(255, 255, 255, 0.2); color: white; border-color: rgba(255, 255, 255, 0.3);">✏️ Изменить ник</button>
       <a href="/profile/settings" class="btn btn-outline" style="background: rgba(255, 255, 255, 0.2); color: white; border-color: rgba(255, 255, 255, 0.3);">⚙️ Настройки</a>
       <button onclick="cleanupTestFics()" class="btn btn-outline" style="background: rgba(255, 255, 255, 0.2); color: white; border-color: rgba(255, 255, 255, 0.3); margin-top: 0.5rem;">🧹 Удалить тестовые фанфики</button>
     `;
+    document.getElementById('edit-nickname-btn')?.addEventListener('click', promptUsernameUpdate);
   }
 
   // Fics count
@@ -158,6 +177,54 @@ function setupTabs() {
       });
     });
   });
+}
+
+async function promptUsernameUpdate() {
+  if (!currentUser) {
+    alert('Войдите, чтобы изменить ник');
+    return;
+  }
+
+  const newUsername = prompt('Введите новый ник', currentUser.username || '');
+  if (newUsername === null) {
+    return;
+  }
+
+  const trimmed = newUsername.trim();
+  if (trimmed.length < 3) {
+    alert('Имя пользователя должно содержать минимум 3 символа');
+    return;
+  }
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE}/users/me`, {
+      method: 'PATCH',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify({ username: trimmed })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      currentUser = data.user;
+      await syncSessionWithServer();
+      updateUserUI();
+      loadProfile();
+      alert('Ник успешно обновлен');
+    } else {
+      alert(data.error || 'Не удалось обновить ник');
+    }
+  } catch (error) {
+    console.error('Error updating username:', error);
+    alert('Ошибка подключения к серверу');
+  }
 }
 
 async function deleteFicFromProfile(ficId) {

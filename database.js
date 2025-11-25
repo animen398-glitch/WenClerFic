@@ -23,6 +23,25 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
   }
 });
 
+function ensureColumn(table, column, definition) {
+  db.all(`PRAGMA table_info(${table})`, (err, rows) => {
+    if (err) {
+      console.error(`Ошибка получения схемы таблицы ${table}:`, err);
+      return;
+    }
+    const exists = rows.some(row => row.name === column);
+    if (!exists) {
+      db.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`, (alterErr) => {
+        if (alterErr) {
+          console.error(`Ошибка добавления столбца ${column} в таблицу ${table}:`, alterErr);
+        } else {
+          console.log(`Столбец ${column} добавлен в таблицу ${table}`);
+        }
+      });
+    }
+  });
+}
+
 // Инициализация таблиц
 function initDatabase() {
   return new Promise((resolve, reject) => {
@@ -40,6 +59,8 @@ function initDatabase() {
         if (err) {
           console.error('Ошибка создания таблицы users:', err);
           reject(err);
+        } else {
+          ensureColumn('users', 'isProfileComplete', 'INTEGER DEFAULT 1');
         }
       });
 
@@ -98,8 +119,46 @@ function initDatabase() {
           console.error('Ошибка создания таблицы comments:', err);
           reject(err);
         } else {
-          console.log('База данных инициализирована');
-          resolve();
+          // Таблица сессий
+          db.run(`CREATE TABLE IF NOT EXISTS sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            userId INTEGER NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            expiresAt DATETIME NOT NULL,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+          )`, (sessionErr) => {
+            if (sessionErr) {
+              console.error('Ошибка создания таблицы sessions:', sessionErr);
+              reject(sessionErr);
+            } else {
+              // Таблица незавершенных профилей
+              db.run(`CREATE TABLE IF NOT EXISTS pending_profiles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                userId INTEGER NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                provider TEXT,
+                meta TEXT,
+                expiresAt DATETIME NOT NULL,
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+              )`, (pendingErr) => {
+                if (pendingErr) {
+                  console.error('Ошибка создания таблицы pending_profiles:', pendingErr);
+                  reject(pendingErr);
+                } else {
+                  cleanupExpiredSessions().catch(err => {
+                    console.error('Ошибка очистки просроченных сессий:', err);
+                  });
+                  cleanupExpiredPendingProfiles().catch(err => {
+                    console.error('Ошибка очистки незавершенных профилей:', err);
+                  });
+                  console.log('База данных инициализирована');
+                  resolve();
+                }
+              });
+            }
+          });
         }
       });
     });
@@ -109,10 +168,10 @@ function initDatabase() {
 // Users
 function createUser(user) {
   return new Promise((resolve, reject) => {
-    const { username, email, password, avatar, provider } = user;
+    const { username, email, password, avatar, provider, isProfileComplete = 1 } = user;
     db.run(
-      `INSERT INTO users (username, email, password, avatar, provider) VALUES (?, ?, ?, ?, ?)`,
-      [username, email, password, avatar || null, provider || null],
+      `INSERT INTO users (username, email, password, avatar, provider, isProfileComplete) VALUES (?, ?, ?, ?, ?, ?)`,
+      [username, email, password, avatar || null, provider || null, isProfileComplete ? 1 : 0],
       function(err) {
         if (err) {
           reject(err);
@@ -147,6 +206,158 @@ function getUserByUsername(username) {
     db.get(`SELECT * FROM users WHERE username = ?`, [username], (err, row) => {
       if (err) reject(err);
       else resolve(row);
+    });
+  });
+}
+
+function updateUser(id, updates = {}) {
+  return new Promise((resolve, reject) => {
+    const fields = Object.keys(updates);
+    if (fields.length === 0) {
+      resolve(null);
+      return;
+    }
+
+    const setClause = fields.map(field => `${field} = ?`).join(', ');
+    const values = fields.map(field => updates[field]);
+    values.push(id);
+
+    db.run(`UPDATE users SET ${setClause} WHERE id = ?`, values, function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        getUserById(id).then(resolve).catch(reject);
+      }
+    });
+  });
+}
+
+// Sessions
+function createSession({ userId, token, expiresAt }) {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `INSERT INTO sessions (userId, token, expiresAt) VALUES (?, ?, ?)`,
+      [userId, token, expiresAt],
+      function(err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve({ id: this.lastID, userId, token, expiresAt });
+        }
+      }
+    );
+  });
+}
+
+function getSessionByToken(token) {
+  return new Promise((resolve, reject) => {
+    db.get(`SELECT * FROM sessions WHERE token = ?`, [token], (err, row) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(row);
+      }
+    });
+  });
+}
+
+function deleteSessionByToken(token) {
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM sessions WHERE token = ?`, [token], function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ success: this.changes > 0 });
+      }
+    });
+  });
+}
+
+function deleteSessionsByUser(userId) {
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM sessions WHERE userId = ?`, [userId], function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ deleted: this.changes });
+      }
+    });
+  });
+}
+
+function cleanupExpiredSessions() {
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM sessions WHERE expiresAt < datetime('now')`, function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ deleted: this.changes });
+      }
+    });
+  });
+}
+
+// Pending profiles
+function createPendingProfile({ userId, token, provider, meta, expiresAt }) {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `INSERT INTO pending_profiles (userId, token, provider, meta, expiresAt) VALUES (?, ?, ?, ?, ?)`,
+      [userId, token, provider || null, meta || null, expiresAt],
+      function(err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve({ id: this.lastID, userId, token, provider, meta, expiresAt });
+        }
+      }
+    );
+  });
+}
+
+function getPendingProfileByToken(token) {
+  return new Promise((resolve, reject) => {
+    db.get(`SELECT * FROM pending_profiles WHERE token = ?`, [token], (err, row) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(row);
+      }
+    });
+  });
+}
+
+function deletePendingProfileByToken(token) {
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM pending_profiles WHERE token = ?`, [token], function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ deleted: this.changes });
+      }
+    });
+  });
+}
+
+function deletePendingProfilesByUser(userId) {
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM pending_profiles WHERE userId = ?`, [userId], function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ deleted: this.changes });
+      }
+    });
+  });
+}
+
+function cleanupExpiredPendingProfiles() {
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM pending_profiles WHERE expiresAt < datetime('now')`, function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ deleted: this.changes });
+      }
     });
   });
 }
@@ -455,6 +666,7 @@ module.exports = {
   getUserById,
   getUserByEmail,
   getUserByUsername,
+  updateUser,
   // Fics
   createFic,
   getFicById,
@@ -471,6 +683,18 @@ module.exports = {
   deleteChapter,
   // Comments
   createComment,
-  getCommentsByFicId
+  getCommentsByFicId,
+  // Sessions
+  createSession,
+  getSessionByToken,
+  deleteSessionByToken,
+  deleteSessionsByUser,
+  cleanupExpiredSessions,
+  // Pending profiles
+  createPendingProfile,
+  getPendingProfileByToken,
+  deletePendingProfileByToken,
+  deletePendingProfilesByUser,
+  cleanupExpiredPendingProfiles
 };
 
