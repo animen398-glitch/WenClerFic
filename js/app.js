@@ -567,7 +567,10 @@ function handleOAuthMessage(event) {
       saveSessionData(event.data.user, event.data.token);
       state.currentUser = event.data.user;
       updateUserUI();
-      document.getElementById('auth-modal')?.style.display = 'none';
+      const authModalEl = document.getElementById('auth-modal');
+      if (authModalEl) {
+        authModalEl.style.display = 'none';
+      }
       if (window.onAuthSuccess) {
         window.onAuthSuccess();
       }
@@ -581,7 +584,10 @@ function handleOAuthMessage(event) {
 
   if (event.data.type === 'oauth-profile-required') {
     closeOAuthPopup();
-    document.getElementById('auth-modal')?.style.display = 'none';
+    const authModalEl = document.getElementById('auth-modal');
+    if (authModalEl) {
+      authModalEl.style.display = 'none';
+    }
     showCompleteProfileModal(event.data);
     return;
   }
