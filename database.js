@@ -291,7 +291,8 @@ function getUserByEmail(email) {
 
 function getUserByUsername(username) {
   return new Promise((resolve, reject) => {
-    db.get(`SELECT * FROM users WHERE username = ?`, [username], (err, row) => {
+    // Проверяем без учета регистра (case-insensitive)
+    db.get(`SELECT * FROM users WHERE LOWER(username) = LOWER(?)`, [username], (err, row) => {
       if (err) reject(err);
       else resolve(row);
     });

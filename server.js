@@ -217,9 +217,10 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Email уже используется' });
     }
 
+    // Проверяем уникальность username без учета регистра
     const existingUserByUsername = await db.getUserByUsername(username);
     if (existingUserByUsername) {
-      return res.status(400).json({ error: 'Имя пользователя уже занято' });
+      return res.status(400).json({ error: 'Имя пользователя уже занято. Попробуйте другое имя.' });
     }
 
     const hashedPassword = await hashPassword(password);
