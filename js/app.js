@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function init() {
+  populateAvatarMenu(); // Заполняем меню сразу
   await checkAuth();
   setupEventListeners();
   checkOAuthFallback();
@@ -56,10 +57,64 @@ async function checkAuth() {
   }
 }
 
+function populateAvatarMenu() {
+  const avatarDropdown = document.getElementById('avatar-dropdown');
+  if (!avatarDropdown || avatarDropdown.children.length > 0) return;
+  
+  avatarDropdown.innerHTML = `
+    <div class="avatar-menu__group">
+      <button class="avatar-menu__item">Мои новости</button>
+      <a href="/profile" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Мой профиль</a>
+      <button class="avatar-menu__item">Личные сообщения</button>
+      
+      <!-- Кабинет автора с подменю -->
+      <div class="avatar-menu__submenu">
+        <button class="avatar-menu__item avatar-menu__item--parent" data-submenu="author">
+          Кабинет автора <span class="arrow">▼</span>
+        </button>
+        <div class="avatar-menu__submenu-items" id="author-submenu" style="display: none;">
+          <a href="/create" class="avatar-menu__item" style="text-decoration: none; color: inherit;" data-auth-required="true" data-auth-required-tab="register">Добавить фанфик</a>
+          <a href="/my-fics" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Мои фанфики</a>
+          <button class="avatar-menu__item">Мой блог</button>
+          <button class="avatar-menu__item">Отзывы</button>
+          <a href="/history" class="avatar-menu__item" style="text-decoration: none; color: inherit;">История изменений</a>
+          <button class="avatar-menu__item">Сообщения об ошибках</button>
+          <button class="avatar-menu__item">Персональный баннер</button>
+        </div>
+      </div>
+      
+      <!-- Кабинет читателя с подменю -->
+      <div class="avatar-menu__submenu">
+        <button class="avatar-menu__item avatar-menu__item--parent" data-submenu="reader">
+          Кабинет читателя <span class="arrow">▼</span>
+        </button>
+        <div class="avatar-menu__submenu-items" id="reader-submenu" style="display: none;">
+          <button class="avatar-menu__item">Сборники</button>
+          <button class="avatar-menu__item">Закладки</button>
+          <button class="avatar-menu__item">Понравившиеся работы</button>
+          <button class="avatar-menu__item">Прочитанные работы</button>
+        </div>
+      </div>
+      
+      <!-- Кабинет помощника -->
+      <button class="avatar-menu__item">Кабинет помощника</button>
+    </div>
+    <div class="avatar-menu__group">
+      <a href="/requests" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Заявки</a>
+      <button class="avatar-menu__item">Связь</button>
+      <a href="/profile/settings" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Настройки</a>
+      <button class="avatar-menu__item avatar-menu__item--danger" id="logout-btn">Выйти</button>
+    </div>
+  `;
+}
+
 function updateUserUI() {
   const userNameEl = document.getElementById('user-name');
   const avatarTrigger = document.getElementById('avatar-trigger');
   const userBtn = document.getElementById('user-btn'); // fallback
+  
+  // Заполняем меню если оно пустое
+  populateAvatarMenu();
   
   if (state.currentUser) {
     if (userNameEl) userNameEl.textContent = state.currentUser.username;
@@ -93,24 +148,39 @@ function setupEventListeners() {
   const userBtn = document.getElementById('user-btn'); // fallback для старых страниц
   
   if (avatarTrigger) {
-    avatarTrigger.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (state.currentUser) {
-        const isOpen = avatarDropdown.getAttribute('aria-hidden') === 'false';
-        const newState = !isOpen;
-        avatarDropdown.setAttribute('aria-hidden', (!newState).toString());
-        avatarTrigger.setAttribute('aria-expanded', newState.toString());
-      } else {
-        showAuthModal('login');
-      }
-    });
+    // Убеждаемся что dropdown существует, если нет - создаем его
+    let avatarDropdown = document.getElementById('avatar-dropdown');
+    if (!avatarDropdown && avatarTrigger.parentElement) {
+      avatarDropdown = document.createElement('div');
+      avatarDropdown.id = 'avatar-dropdown';
+      avatarDropdown.className = 'avatar-menu__dropdown';
+      avatarDropdown.setAttribute('role', 'menu');
+      avatarDropdown.setAttribute('aria-hidden', 'true');
+      avatarTrigger.parentElement.appendChild(avatarDropdown);
+    }
+    
+    if (avatarDropdown) {
+      avatarTrigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (state.currentUser) {
+          const isOpen = avatarDropdown.getAttribute('aria-hidden') === 'false';
+          const newState = !isOpen;
+          avatarDropdown.setAttribute('aria-hidden', (!newState).toString());
+          avatarTrigger.setAttribute('aria-expanded', newState.toString());
+        } else {
+          showAuthModal('login');
+        }
+      });
 
-    document.addEventListener('click', (e) => {
-      if (avatarDropdown && !avatarDropdown.contains(e.target) && !avatarTrigger.contains(e.target)) {
-        avatarDropdown.setAttribute('aria-hidden', 'true');
-        avatarTrigger.setAttribute('aria-expanded', 'false');
-      }
-    });
+      document.addEventListener('click', (e) => {
+        if (avatarDropdown && avatarTrigger && !avatarDropdown.contains(e.target) && !avatarTrigger.contains(e.target)) {
+          avatarDropdown.setAttribute('aria-hidden', 'true');
+          avatarTrigger.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
   } else if (userBtn) {
     // Fallback для старых страниц
     const userDropdown = document.getElementById('user-dropdown');

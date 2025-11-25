@@ -1265,9 +1265,10 @@ app.patch('/api/users/me', async (req, res) => {
       return res.status(400).json({ error: 'Имя пользователя должно содержать минимум 3 символа' });
     }
 
+    // Проверяем уникальность username без учета регистра
     const existingUser = await db.getUserByUsername(newUsername);
     if (existingUser && existingUser.id !== currentUser.id) {
-      return res.status(400).json({ error: 'Имя пользователя уже занято' });
+      return res.status(400).json({ error: 'Имя пользователя уже занято. Попробуйте другое имя.' });
     }
 
     const updatedUser = await db.updateUser(currentUser.id, { username: newUsername });

@@ -32,7 +32,49 @@
             <span class="avatar-menu__name" id="user-name">Войти</span>
           </button>
           <div class="avatar-menu__dropdown" id="avatar-dropdown" role="menu" aria-hidden="true">
-            <!-- Меню будет загружено через app.js -->
+            <div class="avatar-menu__group">
+              <button class="avatar-menu__item">Мои новости</button>
+              <a href="/profile" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Мой профиль</a>
+              <button class="avatar-menu__item">Личные сообщения</button>
+              
+              <!-- Кабинет автора с подменю -->
+              <div class="avatar-menu__submenu">
+                <button class="avatar-menu__item avatar-menu__item--parent" data-submenu="author">
+                  Кабинет автора <span class="arrow">▼</span>
+                </button>
+                <div class="avatar-menu__submenu-items" id="author-submenu" style="display: none;">
+                  <a href="/create" class="avatar-menu__item" style="text-decoration: none; color: inherit;" data-auth-required="true" data-auth-required-tab="register">Добавить фанфик</a>
+                  <a href="/my-fics" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Мои фанфики</a>
+                  <button class="avatar-menu__item">Мой блог</button>
+                  <button class="avatar-menu__item">Отзывы</button>
+                  <a href="/history" class="avatar-menu__item" style="text-decoration: none; color: inherit;">История изменений</a>
+                  <button class="avatar-menu__item">Сообщения об ошибках</button>
+                  <button class="avatar-menu__item">Персональный баннер</button>
+                </div>
+              </div>
+              
+              <!-- Кабинет читателя с подменю -->
+              <div class="avatar-menu__submenu">
+                <button class="avatar-menu__item avatar-menu__item--parent" data-submenu="reader">
+                  Кабинет читателя <span class="arrow">▼</span>
+                </button>
+                <div class="avatar-menu__submenu-items" id="reader-submenu" style="display: none;">
+                  <button class="avatar-menu__item">Сборники</button>
+                  <button class="avatar-menu__item">Закладки</button>
+                  <button class="avatar-menu__item">Понравившиеся работы</button>
+                  <button class="avatar-menu__item">Прочитанные работы</button>
+                </div>
+              </div>
+              
+              <!-- Кабинет помощника -->
+              <button class="avatar-menu__item">Кабинет помощника</button>
+            </div>
+            <div class="avatar-menu__group">
+              <a href="/requests" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Заявки</a>
+              <button class="avatar-menu__item">Связь</button>
+              <a href="/profile/settings" class="avatar-menu__item" style="text-decoration: none; color: inherit;">Настройки</a>
+              <button class="avatar-menu__item avatar-menu__item--danger" id="logout-btn">Выйти</button>
+            </div>
           </div>
         </div>
       </div>
