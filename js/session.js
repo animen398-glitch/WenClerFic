@@ -78,3 +78,4 @@ function dispatchAuthEvent(detail) {
   document.dispatchEvent(new CustomEvent('wenclerfic:auth-changed', { detail }));
 }
 
+

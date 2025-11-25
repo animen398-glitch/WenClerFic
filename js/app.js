@@ -227,14 +227,27 @@ function setupEventListeners() {
   }
   
   setupAuthRequiredTriggers();
-  setupMenuHandlers();
+  
+  // Устанавливаем обработчики меню после небольшой задержки, чтобы DOM точно был готов
+  setTimeout(() => {
+    setupMenuHandlers();
+  }, 100);
 }
 
 function setupMenuHandlers() {
+  // Удаляем старые обработчики, чтобы не дублировать
+  const menuItems = document.querySelectorAll('.avatar-menu__item');
+  menuItems.forEach(btn => {
+    // Клонируем элемент, чтобы удалить все обработчики
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+  });
+
   // Обработчики для кнопок "Кабинет"
   document.querySelectorAll('.avatar-menu__item[data-role]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       const role = btn.dataset.role;
       if (role === 'author') {
         window.location.href = '/my-fics';
@@ -252,17 +265,21 @@ function setupMenuHandlers() {
     const text = btn.textContent.trim();
     const href = btn.getAttribute('href');
     
-    // Пропускаем кнопки, которые уже имеют href (ссылки)
+    // Пропускаем кнопки, которые уже имеют href (ссылки) - они работают автоматически
     if (href) return;
     
     // Пропускаем кнопки с data-role (уже обработаны выше)
     if (btn.dataset.role) return;
     
-    // Пропускаем кнопку "Выйти" (уже обработана)
+    // Пропускаем кнопку "Выйти" (уже обработана отдельно)
     if (btn.id === 'logout-btn') return;
+    
+    // Пропускаем label элементы
+    if (btn.classList.contains('avatar-menu__item--label')) return;
     
     btn.addEventListener('click', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       handleMenuClick(text, btn);
     });
   });
@@ -326,11 +343,84 @@ function handleMenuClick(menuText, button) {
 }
 
 function showPremiumModal() {
-  alert('Премиум-аккаунт дает:\n- Приоритетная поддержка\n- Расширенные возможности\n- Без рекламы\n\nСкоро будет доступно!');
+  // Создаем модальное окно для премиум-аккаунта
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;';
+  
+  modal.innerHTML = `
+    <div class="modal-content" style="background: var(--surface); border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; position: relative;">
+      <span class="modal-close" style="position: absolute; top: 1rem; right: 1rem; font-size: 2rem; cursor: pointer; color: var(--text-secondary);">&times;</span>
+      <h2 style="margin-bottom: 1rem; color: var(--text-primary);">✨ Улучшить аккаунт</h2>
+      <div style="color: var(--text-secondary); line-height: 1.8;">
+        <p style="margin-bottom: 1rem;"><strong style="color: var(--primary-color);">Премиум-аккаунт</strong> дает вам:</p>
+        <ul style="margin-left: 1.5rem; margin-bottom: 1.5rem;">
+          <li>🚀 Приоритетная поддержка</li>
+          <li>📊 Расширенная статистика</li>
+          <li>🎨 Персональный баннер</li>
+          <li>📝 Неограниченное количество фанфиков</li>
+          <li>🚫 Без рекламы</li>
+        </ul>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Скоро будет доступно для покупки!</p>
+      </div>
+      <button class="btn btn-primary" style="margin-top: 1.5rem; width: 100%;" onclick="this.closest('.modal').remove()">Понятно</button>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Закрытие по клику на фон
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
+  
+  // Закрытие по кнопке X
+  modal.querySelector('.modal-close').addEventListener('click', () => {
+    modal.remove();
+  });
 }
 
 function showCoinsModal() {
-  alert('Система монет скоро будет доступна!');
+  // Создаем модальное окно для покупки монет
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;';
+  
+  modal.innerHTML = `
+    <div class="modal-content" style="background: var(--surface); border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; position: relative;">
+      <span class="modal-close" style="position: absolute; top: 1rem; right: 1rem; font-size: 2rem; cursor: pointer; color: var(--text-secondary);">&times;</span>
+      <h2 style="margin-bottom: 1rem; color: var(--text-primary);">🪙 Купить монеты</h2>
+      <div style="color: var(--text-secondary); line-height: 1.8;">
+        <p style="margin-bottom: 1rem;">Монеты можно использовать для:</p>
+        <ul style="margin-left: 1.5rem; margin-bottom: 1.5rem;">
+          <li>⭐ Поднятие фанфика в топ</li>
+          <li>🎁 Покупка премиум-функций</li>
+          <li>💎 Специальные возможности</li>
+        </ul>
+        <div style="background: rgba(124, 58, 237, 0.1); border: 1px solid var(--primary-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+          <p style="margin: 0; color: var(--text-primary);"><strong>Ваш баланс: 0 монет</strong></p>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Система монет скоро будет доступна!</p>
+      </div>
+      <button class="btn btn-primary" style="margin-top: 1.5rem; width: 100%;" onclick="this.closest('.modal').remove()">Понятно</button>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Закрытие по клику на фон
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
+  
+  // Закрытие по кнопке X
+  modal.querySelector('.modal-close').addEventListener('click', () => {
+    modal.remove();
+  });
 }
 
 function showAuthModal(defaultTab = 'login') {
